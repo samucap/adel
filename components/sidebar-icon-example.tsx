@@ -91,9 +91,9 @@ const radarData = [
 ]
 
 const radialData = [
-  { name: "Complete", value: 78, fill: "oklch(0.66 0.21 354)" },
-  { name: "In Progress", value: 52, fill: "oklch(0.73 0.18 350)" },
-  { name: "Pending", value: 34, fill: "oklch(0.82 0.11 346)" },
+  { name: "Complete", value: 78, fill: "var(--chart-1)" },
+  { name: "In Progress", value: 52, fill: "var(--chart-2)" },
+  { name: "Pending", value: 34, fill: "var(--chart-3)" },
 ]
 
 const scatterData = [
@@ -105,7 +105,7 @@ const scatterData = [
   { x: 110, y: 280, z: 200 },
 ]
 
-const COLORS = ["oklch(0.66 0.21 354)", "oklch(0.73 0.18 350)", "oklch(0.82 0.11 346)", "oklch(0.59 0.22 1)"]
+const COLORS = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)"]
 
 const tooltipStyle = {
   backgroundColor: 'oklch(0.216 0.006 56.043)',
@@ -359,8 +359,8 @@ function SidebarIconContent() {
                   className="group/collapsible"
                 >
                   <SidebarMenuItem ref={(el) => { itemRefs.current[item.title] = el }}>
-                    <SidebarMenuButton 
-                      tooltip={item.title} 
+                    <SidebarMenuButton
+                      tooltip={item.title}
                       asChild
                       onClick={() => handleIconClick(item.title)}
                     >
@@ -488,15 +488,15 @@ function SidebarIconContent() {
                         <AreaChart data={chartData}>
                           <defs>
                             <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="5%" stopColor="oklch(0.66 0.21 354)" stopOpacity={0.4}/>
-                              <stop offset="95%" stopColor="oklch(0.66 0.21 354)" stopOpacity={0}/>
+                              <stop offset="5%" stopColor="var(--chart-1)" stopOpacity={0.4} />
+                              <stop offset="95%" stopColor="var(--chart-1)" stopOpacity={0} />
                             </linearGradient>
                           </defs>
                           <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.3 0.01 56)" />
                           <XAxis dataKey="month" stroke="oklch(0.6 0.01 56)" fontSize={12} tickLine={false} axisLine={false} />
                           <YAxis stroke="oklch(0.6 0.01 56)" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `$${value}`} />
                           <Tooltip contentStyle={tooltipStyle} cursor={{ fill: 'oklch(0.3 0.01 56 / 30%)' }} />
-                          <Area type="monotone" dataKey="revenue" stroke="oklch(0.66 0.21 354)" fillOpacity={1} fill="url(#colorRevenue)" strokeWidth={2} />
+                          <Area type="monotone" dataKey="revenue" stroke="var(--chart-1)" fillOpacity={1} fill="url(#colorRevenue)" strokeWidth={2} />
                         </AreaChart>
                       </ResponsiveContainer>
                     </CardContent>
@@ -516,8 +516,8 @@ function SidebarIconContent() {
                           <XAxis dataKey="month" stroke="oklch(0.6 0.01 56)" fontSize={12} tickLine={false} axisLine={false} />
                           <YAxis stroke="oklch(0.6 0.01 56)" fontSize={12} tickLine={false} axisLine={false} />
                           <Tooltip contentStyle={tooltipStyle} cursor={{ stroke: 'oklch(0.5 0.01 56)' }} />
-                          <Line type="monotone" dataKey="users" stroke="oklch(0.66 0.21 354)" strokeWidth={2} dot={{ fill: 'oklch(0.66 0.21 354)', strokeWidth: 0, r: 4 }} activeDot={{ r: 6, strokeWidth: 0 }} />
-                          <Line type="monotone" dataKey="sessions" stroke="oklch(0.73 0.18 350)" strokeWidth={2} dot={{ fill: 'oklch(0.73 0.18 350)', strokeWidth: 0, r: 4 }} activeDot={{ r: 6, strokeWidth: 0 }} />
+                          <Line type="monotone" dataKey="users" stroke="var(--chart-1)" strokeWidth={2} dot={{ fill: 'var(--chart-1)', strokeWidth: 0, r: 4 }} activeDot={{ r: 6, strokeWidth: 0 }} />
+                          <Line type="monotone" dataKey="sessions" stroke="var(--chart-2)" strokeWidth={2} dot={{ fill: 'var(--chart-2)', strokeWidth: 0, r: 4 }} activeDot={{ r: 6, strokeWidth: 0 }} />
                         </LineChart>
                       </ResponsiveContainer>
                     </CardContent>
@@ -542,9 +542,9 @@ function SidebarIconContent() {
                           <XAxis dataKey="month" stroke="oklch(0.6 0.01 56)" fontSize={12} tickLine={false} axisLine={false} />
                           <YAxis stroke="oklch(0.6 0.01 56)" fontSize={12} tickLine={false} axisLine={false} />
                           <Tooltip contentStyle={tooltipStyle} cursor={{ fill: 'oklch(0.3 0.01 56 / 30%)' }} />
-                          <Bar dataKey="revenue" fill="oklch(0.66 0.21 354)" radius={[4, 4, 0, 0]} />
-                          <Bar dataKey="users" fill="oklch(0.73 0.18 350)" radius={[4, 4, 0, 0]} />
-                          <Bar dataKey="sessions" fill="oklch(0.82 0.11 346)" radius={[4, 4, 0, 0]} />
+                          <Bar dataKey="revenue" fill="var(--chart-1)" radius={[4, 4, 0, 0]} />
+                          <Bar dataKey="users" fill="var(--chart-2)" radius={[4, 4, 0, 0]} />
+                          <Bar dataKey="sessions" fill="var(--chart-3)" radius={[4, 4, 0, 0]} />
                         </BarChart>
                       </ResponsiveContainer>
                     </CardContent>
@@ -564,7 +564,7 @@ function SidebarIconContent() {
                           <XAxis type="number" stroke="oklch(0.6 0.01 56)" fontSize={12} tickLine={false} axisLine={false} />
                           <YAxis dataKey="name" type="category" stroke="oklch(0.6 0.01 56)" fontSize={12} tickLine={false} axisLine={false} width={60} />
                           <Tooltip contentStyle={tooltipStyle} cursor={{ fill: 'oklch(0.3 0.01 56 / 30%)' }} />
-                          <Bar dataKey="value" fill="oklch(0.66 0.21 354)" radius={[0, 4, 4, 0]} />
+                          <Bar dataKey="value" fill="var(--chart-1)" radius={[0, 4, 4, 0]} />
                         </BarChart>
                       </ResponsiveContainer>
                     </CardContent>
@@ -620,8 +620,8 @@ function SidebarIconContent() {
                           <PolarAngleAxis dataKey="subject" stroke="oklch(0.6 0.01 56)" fontSize={11} />
                           <PolarRadiusAxis stroke="oklch(0.4 0.01 56)" fontSize={10} />
                           <Tooltip contentStyle={tooltipStyle} />
-                          <Radar name="Product A" dataKey="A" stroke="oklch(0.66 0.21 354)" fill="oklch(0.66 0.21 354)" fillOpacity={0.3} />
-                          <Radar name="Product B" dataKey="B" stroke="oklch(0.73 0.18 350)" fill="oklch(0.73 0.18 350)" fillOpacity={0.3} />
+                          <Radar name="Product A" dataKey="A" stroke="var(--chart-1)" fill="var(--chart-1)" fillOpacity={0.3} />
+                          <Radar name="Product B" dataKey="B" stroke="var(--chart-2)" fill="var(--chart-2)" fillOpacity={0.3} />
                         </RadarChart>
                       </ResponsiveContainer>
                     </CardContent>
@@ -665,7 +665,7 @@ function SidebarIconContent() {
                           <YAxis type="number" dataKey="y" stroke="oklch(0.6 0.01 56)" fontSize={12} tickLine={false} axisLine={false} />
                           <ZAxis type="number" dataKey="z" range={[60, 400]} />
                           <Tooltip contentStyle={tooltipStyle} cursor={{ strokeDasharray: '3 3', stroke: 'oklch(0.5 0.01 56)' }} />
-                          <Scatter data={scatterData} fill="oklch(0.66 0.21 354)" />
+                          <Scatter data={scatterData} fill="var(--chart-1)" />
                         </ScatterChart>
                       </ResponsiveContainer>
                     </CardContent>
@@ -685,9 +685,9 @@ function SidebarIconContent() {
                           <XAxis dataKey="month" stroke="oklch(0.6 0.01 56)" fontSize={12} tickLine={false} axisLine={false} />
                           <YAxis stroke="oklch(0.6 0.01 56)" fontSize={12} tickLine={false} axisLine={false} />
                           <Tooltip contentStyle={tooltipStyle} cursor={{ fill: 'oklch(0.3 0.01 56 / 30%)' }} />
-                          <Bar dataKey="revenue" fill="oklch(0.66 0.21 354)" radius={[4, 4, 0, 0]} />
-                          <Line type="monotone" dataKey="users" stroke="oklch(0.73 0.18 350)" strokeWidth={2} dot={{ fill: 'oklch(0.73 0.18 350)', r: 4 }} />
-                          <Area type="monotone" dataKey="sessions" fill="oklch(0.82 0.11 346)" stroke="oklch(0.82 0.11 346)" fillOpacity={0.2} />
+                          <Bar dataKey="revenue" fill="var(--chart-1)" radius={[4, 4, 0, 0]} />
+                          <Line type="monotone" dataKey="users" stroke="var(--chart-2)" strokeWidth={2} dot={{ fill: 'var(--chart-2)', r: 4 }} />
+                          <Area type="monotone" dataKey="sessions" fill="var(--chart-3)" stroke="var(--chart-3)" fillOpacity={0.2} />
                         </ComposedChart>
                       </ResponsiveContainer>
                     </CardContent>
