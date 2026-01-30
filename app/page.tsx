@@ -1,5 +1,5 @@
-import { SidebarIconExample } from "@/components/sidebar-icon-example";
+import { redirect } from "next/navigation";
 
 export default function Page() {
-  return <SidebarIconExample />
+  redirect("/dashboard");
 }

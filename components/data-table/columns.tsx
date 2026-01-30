@@ -45,6 +45,26 @@ export const columns: ColumnDef<Task>[] = [
         enableHiding: false,
     },
     {
+        accessorKey: "label",
+        header: ({ column }) => (
+            <DataTableColumnHeader column={column} title="Label" />
+        ),
+        cell: ({ row }) => {
+            const label = labels.find((label) => label.value === row.getValue("label"))
+
+            if (!label) {
+                return null
+            }
+
+            return (
+                <Badge variant="outline">{label.label}</Badge>
+            )
+        },
+        filterFn: (row, id, value) => {
+            return value.includes(row.getValue(id))
+        },
+    },
+    {
         accessorKey: "title",
         header: ({ column }) => (
             <DataTableColumnHeader column={column} title="Title" />
