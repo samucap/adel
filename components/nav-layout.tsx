@@ -100,5 +100,3 @@ export function NavLayout({ children }: { children: React.ReactNode }) {
         </SidebarProvider>
     )
 }
-
-
