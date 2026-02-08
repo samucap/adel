@@ -32,6 +32,8 @@ import {
   Trophy,
   ChevronsLeft,
   ChevronsRight,
+  Dices,
+  ChartNetwork,
 } from "lucide-react";
 
 import {
@@ -87,19 +89,19 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           {
             title: "Markets",
             url: "/markets",
-            icon: BookOpen,
+            icon: Dices,
             isActive: pathname.startsWith("/markets"),
           },
-          {
-            title: "Rewards",
-            url: "/rewards",
-            icon: BookOpen,
-            isActive: pathname.startsWith("/rewards"),
-          },
+          //{
+          //  title: "Rewards",
+          //  url: "/rewards",
+          //  icon: BookOpen,
+          //  isActive: pathname.startsWith("/rewards"),
+          //},
           {
             title: "LeaderBoard",
             url: "/leaderboard",
-            icon: BookOpen,
+            icon: ChartNetwork,
             isActive: pathname.startsWith("/leaderboard"),
           },
         ],
@@ -226,7 +228,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   </DropdownMenuGroup>
                   <DropdownMenuSeparator />
                   <DropdownMenuGroup>
-                    <DropdownMenuItem>Account</DropdownMenuItem>
+                    <DropdownMenuItem><Link href="/profile">Account</Link></DropdownMenuItem>
                     <DropdownMenuItem>Billing</DropdownMenuItem>
                     <DropdownMenuItem>Settings</DropdownMenuItem>
                   </DropdownMenuGroup>

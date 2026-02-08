@@ -32,7 +32,7 @@ export type Event = {
   // New fields
   gameId?: string
   gameStartTime?: string
-  league?: "NFL" | "NBA" | "EPL" | "N/A"
+  league?: string
   isSports?: boolean
 }
 

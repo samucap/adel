@@ -10,6 +10,7 @@ import { ActivityFeed } from "@/components/dashboard/activity-feed"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Separator } from "@/components/ui/separator"
 import { Flame } from "lucide-react"
+import { useAppStore } from "@/lib/store"
 
 export default function Home() {
   return (

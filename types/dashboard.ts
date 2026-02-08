@@ -87,3 +87,10 @@ export interface UserProfile {
     positions: UserPosition[];
     activity: UserActivity[];
 }
+
+export interface Category {
+    slug: string
+    label: string
+    related: Category[]
+}
+
