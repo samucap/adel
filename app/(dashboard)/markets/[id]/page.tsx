@@ -1,6 +1,5 @@
 "use client"
 
-import { NavLayout } from "@/components/nav-layout"
 import { mockEvents } from "@/lib/mock-data"
 import { useParams } from "next/navigation"
 import { EventView } from "@/components/EventView"
@@ -15,11 +14,8 @@ export default function EventDetailPage() {
     ) || mockEvents[0]
 
     return (
-        <NavLayout>
-            <div className="h-[calc(100vh-4rem)] flex flex-col">
-                <EventView event={event} />
-            </div>
-        </NavLayout>
+        <div className="h-[calc(100vh-4rem)] flex flex-col">
+            Market Detail Page
+        </div>
     )
 }
-

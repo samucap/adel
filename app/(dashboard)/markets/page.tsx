@@ -1,21 +1,21 @@
 "use client"
 
-import { NavLayout } from "@/components/nav-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
 import { useAppStore } from "@/lib/store"
+import { CategoryNav } from "@/components/category-nav"
 
 export default function MarketsPage() {
     const { events, eventsLoading, eventsError } = useAppStore()
 
     return (
-        <NavLayout>
-            <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-                <div className="flex items-center justify-between space-y-2">
-                    <h2 className="text-3xl font-bold tracking-tight">Active Events</h2>
-                </div>
+        <div className="flex flex-col h-full">
+            {/* Category Navigation at top */}
+            <CategoryNav />
 
+            {/* Events List */}
+            <div className="flex-1 overflow-auto">
                 {eventsLoading && (
                     <div className="text-center py-12 text-muted-foreground">Loading events...</div>
                 )}
@@ -70,6 +70,6 @@ export default function MarketsPage() {
                     </div>
                 )}
             </div>
-        </NavLayout>
+        </div>
     )
 }

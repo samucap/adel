@@ -1,11 +1,13 @@
 import { create } from "zustand"
 import { Event, Market, Category } from "@/types/dashboard"
 import { fetchCats, fetchEvents, fetchMarketById } from "./services"
+import { backupCategories, backupEvents } from "./backup-data"
 
 interface AppState {
     // Top navigation - list of categories from API
     topNav: Category[]
     topNavLoading: boolean
+    topNavError: string | null
     currCat: string
 
     // Events list
@@ -19,9 +21,15 @@ interface AppState {
     // Current selected market
     currMkt: Market | null
 
+    // UI State - Filters and Sorting
+    sortBy: string
+    filterBy: string
+
     // Actions
     setCurrentEvent: (event: Event | null) => void
     setCurrentMarket: (market: Market | null) => void
+    setSortBy: (value: string) => void
+    setFilterBy: (value: string) => void
     loadCats: () => Promise<void>
     loadEvents: (category?: string) => Promise<void>
     loadMarket: (id: string) => Promise<void>
@@ -32,6 +40,7 @@ export const useAppStore = create<AppState>((set) => ({
     topNav: [],
     currCat: "all",
     topNavLoading: false,
+    topNavError: null,
 
     events: [],
     eventsLoading: false,
@@ -40,19 +49,32 @@ export const useAppStore = create<AppState>((set) => ({
     currEv: null,
     currMkt: null,
 
+    // UI State
+    sortBy: "volume",
+    filterBy: "all",
+
     // Actions
     setCurrentEvent: (event) => set({ currEv: event }),
 
     setCurrentMarket: (market) => set({ currMkt: market }),
 
+    setSortBy: (value) => set({ sortBy: value }),
+
+    setFilterBy: (value) => set({ filterBy: value }),
+
     loadCats: async () => {
-        set({ topNavLoading: true })
+        set({ topNavLoading: true, topNavError: null })
         try {
             const categories = await fetchCats()
             set({ topNav: categories, topNavLoading: false })
         } catch (error) {
             console.error("Failed to load categories:", error)
-            set({ topNavLoading: false })
+            // Fallback to backup data
+            set({
+                topNav: backupCategories,
+                topNavLoading: false,
+                topNavError: "API connection failed. Showing offline mode."
+            })
         }
     },
 
@@ -63,7 +85,13 @@ export const useAppStore = create<AppState>((set) => ({
             set({ events, eventsLoading: false })
         } catch (error) {
             const errorMsg = error instanceof Error ? error.message : "Failed to load events"
-            set({ eventsError: errorMsg, eventsLoading: false })
+            console.error("Failed to load events:", error)
+            // Fallback to backup data
+            set({
+                events: backupEvents,
+                eventsLoading: false,
+                eventsError: `Connection error: ${errorMsg}. Using stale data.`
+            })
         }
     },
 

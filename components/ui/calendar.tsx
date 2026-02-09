@@ -71,7 +71,7 @@ function Calendar({
           defaultClassNames.dropdowns
         ),
         dropdown_root: cn(
-          "relative cn-calendar-dropdown-root rounded-(--cell-radius)",
+          "relative rounded-(--cell-radius)",
           defaultClassNames.dropdown_root
         ),
         dropdown: cn(
@@ -82,7 +82,7 @@ function Calendar({
           "select-none font-medium",
           captionLayout === "label"
             ? "text-sm"
-            : "cn-calendar-caption-label rounded-(--cell-radius) flex items-center gap-1 text-sm  [&>svg]:text-muted-foreground [&>svg]:size-3.5",
+            : "rounded-(--cell-radius) flex items-center gap-1 text-sm [&>svg]:text-muted-foreground [&>svg]:size-3.5",
           defaultClassNames.caption_label
         ),
         table: "w-full border-collapse",

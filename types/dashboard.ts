@@ -89,6 +89,7 @@ export interface UserProfile {
 }
 
 export interface Category {
+    id: string
     slug: string
     label: string
     related: Category[]
