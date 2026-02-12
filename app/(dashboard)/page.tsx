@@ -18,12 +18,6 @@ import { useEffect } from "react"
 import { Activity, DollarSign, Users, BarChart3, Coins, Layers } from "lucide-react"
 
 export default function DashboardPage() {
-    const { loadEvents, loadCats } = useAppStore()
-
-    useEffect(() => {
-        loadCats()
-        loadEvents()
-    }, [loadCats, loadEvents])
 
     return (
         <div className="flex flex-col gap-4 p-3">

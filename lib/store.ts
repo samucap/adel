@@ -30,6 +30,8 @@ interface AppState {
     setCurrentMarket: (market: Market | null) => void
     setSortBy: (value: string) => void
     setFilterBy: (value: string) => void
+    searchQuery: string
+    setSearchQuery: (query: string) => void
     loadCats: () => Promise<void>
     loadEvents: (category?: string) => Promise<void>
     loadMarket: (id: string) => Promise<void>
@@ -61,6 +63,9 @@ export const useAppStore = create<AppState>((set) => ({
     setSortBy: (value) => set({ sortBy: value }),
 
     setFilterBy: (value) => set({ filterBy: value }),
+
+    searchQuery: "",
+    setSearchQuery: (query: string) => set({ searchQuery: query }),
 
     loadCats: async () => {
         set({ topNavLoading: true, topNavError: null })

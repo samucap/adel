@@ -18,6 +18,7 @@ interface DashboardContainerProps {
     onFilterClick?: () => void
     onSearch?: (query: string) => void
     className?: string
+    disableScroll?: boolean
 }
 
 export function DashboardContainer({
@@ -36,6 +37,7 @@ export function DashboardContainer({
     onFilterClick,
     onSearch,
     className,
+    disableScroll = false,
 }: DashboardContainerProps) {
     const [searchQuery, setSearchQuery] = useState("")
 
@@ -45,66 +47,71 @@ export function DashboardContainer({
         onSearch?.(query)
     }
 
+    const showHeader = title || showSearch || showFilters || showSort
+
     return (
         <div className={cn("flex flex-col h-full max-h-[calc(100vh-4rem)]", className)}>
             {/* Fixed Header */}
-            <header className="flex-shrink-0 flex items-center justify-between gap-4 px-4 py-3 border-b border-border/50 bg-background/80 backdrop-blur-sm sticky top-0 z-10">
-                {/* Left: Title */}
-                {title && (
-                    <h1 className="text-lg font-semibold tracking-tight flex-shrink-0">{title}</h1>
-                )}
+            {showHeader && (
+                <header className="flex-shrink-0 flex items-center justify-between gap-4 px-4 py-3 border-b border-border/50 bg-background/80 backdrop-blur-sm sticky top-0 z-10">
+                    {/* Title if present */}
+                    {title && <h1 className="text-lg font-semibold">{title}</h1>}
 
-                {/* Center: Search */}
-                {showSearch && (
-                    <div className="flex-1 max-w-md">
-                        <div className="relative">
-                            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                            <Input
-                                type="search"
-                                placeholder="Search markets, events..."
-                                value={searchQuery}
-                                onChange={handleSearchChange}
-                                className="h-8 pl-8 text-sm bg-muted/50 border-border/50"
-                            />
+                    {/* Center: Search */}
+                    {showSearch && (
+                        <div className="flex-1 max-w-md">
+                            <div className="relative">
+                                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <Input
+                                    type="search"
+                                    placeholder="Search markets, events..."
+                                    value={searchQuery}
+                                    onChange={handleSearchChange}
+                                    className="h-8 pl-8 text-sm bg-muted/50 border-border/50"
+                                />
+                            </div>
                         </div>
+                    )}
+
+                    {/* Right: Controls */}
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                        {showFilters && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={onFilterClick}
+                                className="h-8 px-3 text-xs"
+                            >
+                                <Filter className="h-3.5 w-3.5 mr-1.5" />
+                                Filters
+                            </Button>
+                        )}
+
+                        {showSort && (
+                            <Select onValueChange={onSortChange} defaultValue="volume">
+                                <SelectTrigger className="h-8 w-[130px] text-xs">
+                                    <ArrowUpDown className="h-3.5 w-3.5 mr-1.5" />
+                                    <SelectValue placeholder="Sort by" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {sortOptions.map((option) => (
+                                        <SelectItem key={option.value} value={option.value} className="text-xs">
+                                            {option.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        )}
                     </div>
-                )}
-
-                {/* Right: Controls */}
-                <div className="flex items-center gap-2 flex-shrink-0">
-                    {showFilters && (
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={onFilterClick}
-                            className="h-8 px-3 text-xs"
-                        >
-                            <Filter className="h-3.5 w-3.5 mr-1.5" />
-                            Filters
-                        </Button>
-                    )}
-
-                    {showSort && (
-                        <Select onValueChange={onSortChange} defaultValue="volume">
-                            <SelectTrigger className="h-8 w-[130px] text-xs">
-                                <ArrowUpDown className="h-3.5 w-3.5 mr-1.5" />
-                                <SelectValue placeholder="Sort by" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {sortOptions.map((option) => (
-                                    <SelectItem key={option.value} value={option.value} className="text-xs">
-                                        {option.label}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    )}
-                </div>
-            </header>
+                </header>
+            )}
 
             {/* Scrollable Viewport */}
-            <div className="flex-1 overflow-y-auto custom-scrollbar">
-                <div className="min-h-0">
+            <div className={cn(
+                "flex-1 min-h-0",
+                disableScroll ? "overflow-hidden" : "overflow-y-auto custom-scrollbar"
+            )}>
+                <div className={cn("min-h-0", disableScroll && "h-full")}>
                     {children}
                 </div>
             </div>

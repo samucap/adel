@@ -3,21 +3,24 @@
 import { NavLayout } from "@/components/nav-layout"
 import { DashboardContainer } from "@/components/dashboard/dashboard-container"
 import { useAppStore } from "@/lib/store"
+import { usePathname } from "next/navigation"
 
 export default function DashboardLayout({
     children,
 }: {
     children: React.ReactNode
 }) {
-    const { setSortBy } = useAppStore()
+    const pathname = usePathname()
+    // Disable scroll on markets page to allow internal scrolling of lists
+    const isMarketsPage = pathname === '/markets' || pathname?.startsWith('/markets/')
 
     return (
         <NavLayout>
             <DashboardContainer
-                onSortChange={setSortBy}
-                showFilters={true}
-                showSort={true}
-                showSearch={true}
+                disableScroll={false} // Allow main page to scroll naturally
+                showFilters={false}
+                showSort={false}
+                showSearch={false}
             >
                 {children}
             </DashboardContainer>

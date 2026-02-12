@@ -1,75 +1,79 @@
 "use client"
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import Link from "next/link"
-import { Badge } from "@/components/ui/badge"
+import { useMemo } from "react"
 import { useAppStore } from "@/lib/store"
 import { CategoryNav } from "@/components/category-nav"
+import { EventCard } from "@/components/dashboard/event-card"
+import { Loader2 } from "lucide-react"
 
 export default function MarketsPage() {
-    const { events, eventsLoading, eventsError } = useAppStore()
+    const {
+        events,
+        eventsLoading,
+        searchQuery,
+        filterBy,
+        sortBy,
+    } = useAppStore()
+
+    const displayEvents = useMemo(() => {
+        if (!events) return []
+
+        // Filter
+        let filtered = events.filter(event => {
+            if (searchQuery) {
+                const matchesSearch = event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    event.ticker.toLowerCase().includes(searchQuery.toLowerCase())
+                if (!matchesSearch) return false
+            }
+
+            if (filterBy === 'active') {
+                if (!event.active) return false
+            }
+
+            return true
+        })
+
+        // Sort
+        filtered.sort((a, b) => {
+            switch (sortBy) {
+                case 'newest':
+                    return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+                case 'ending':
+                    return new Date(a.endDate).getTime() - new Date(b.endDate).getTime()
+                case 'trending':
+                    // Use 24h volume as proxy for trending if no explicit trending score
+                    return (b.volume24hr || 0) - (a.volume24hr || 0)
+                case 'volume':
+                default:
+                    return (b.volume || 0) - (a.volume || 0)
+            }
+        })
+
+        return filtered
+    }, [events, searchQuery, filterBy, sortBy])
 
     return (
-        <div className="flex flex-col h-full">
-            {/* Category Navigation at top */}
+        <div className="flex flex-col gap-6">
             <CategoryNav />
 
-            {/* Events List */}
-            <div className="flex-1 overflow-auto">
-                {eventsLoading && (
-                    <div className="text-center py-12 text-muted-foreground">Loading events...</div>
-                )}
-
-                {eventsError && (
-                    <div className="text-center py-12 text-red-500">Error: {eventsError}</div>
-                )}
-
-                {!eventsLoading && !eventsError && events.length === 0 && (
-                    <div className="text-center py-12 text-muted-foreground">No events found</div>
-                )}
-
-                {/* TODO: sort by volume, volume24hr, ending soon */}
-
-                {!eventsLoading && !eventsError && events.length > 0 && (
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                        {events.map((event) => (
-                            <Link key={event.id} href={`/markets/${event.id}`} className="block group">
-                                <Card className="hover:border-primary/50 transition-colors cursor-pointer h-full">
-                                    <CardHeader className="pb-2">
-                                        <div className="flex justify-between items-start">
-                                            <Badge variant="outline">{event.ticker || 'Event'}</Badge>
-                                            <Badge className={event.negRisk ? "bg-amber-500/10 text-amber-500 hover:bg-amber-500/20" : "bg-blue-500/10 text-blue-500 hover:bg-blue-500/20"}>
-                                                ${(event.volume / 1000000).toFixed(1)}M Vol
-                                            </Badge>
-                                        </div>
-                                        <CardTitle className="pt-2">{event.title}</CardTitle>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
-                                            {event.description}
-                                        </p>
-                                        {event.markets && event.markets.length > 0 && (
-                                            <div className="space-y-2">
-                                                {event.markets.slice(0, 2).map((market) => (
-                                                    <div key={market.id} className="flex justify-between text-sm bg-muted/50 p-2 rounded">
-                                                        <span>{market.question}</span>
-                                                        <span className="font-mono font-bold">{market.lastTradePrice ? Math.round(market.lastTradePrice * 100) : 0}%</span>
-                                                    </div>
-                                                ))}
-                                                {event.markets.length > 2 && (
-                                                    <div className="text-xs text-center text-muted-foreground pt-1">
-                                                        + {event.markets.length - 2} more markets
-                                                    </div>
-                                                )}
-                                            </div>
-                                        )}
-                                    </CardContent>
-                                </Card>
-                            </Link>
-                        ))}
-                    </div>
-                )}
-            </div>
+            {eventsLoading ? (
+                <div className="flex justify-center py-20">
+                    <Loader2 className="h-10 w-10 animate-spin text-muted-foreground" />
+                </div>
+            ) : displayEvents.length === 0 ? (
+                <div className="text-center py-20 text-muted-foreground">
+                    No events found.
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    {displayEvents.map((event) => (
+                        <EventCard
+                            key={event.id}
+                            event={event}
+                        />
+                    ))}
+                </div>
+            )}
         </div>
     )
 }

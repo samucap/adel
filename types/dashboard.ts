@@ -57,6 +57,7 @@ export interface Event {
     negRiskMarketID: string;
     commentCount: number;
     markets: Market[];
+    imageOptimized: any;
 }
 
 export interface UserPosition {
