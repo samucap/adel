@@ -1,79 +1,37 @@
 "use client"
 
-import { useMemo } from "react"
-import { useAppStore } from "@/lib/store"
+import React, { useEffect } from "react"
 import { CategoryNav } from "@/components/category-nav"
-import { EventCard } from "@/components/dashboard/event-card"
-import { Loader2 } from "lucide-react"
+import { MarketFeed } from "@/components/market-feed/market-feed"
+import { useAppStore } from "@/lib/store"
+import { adaptDashboardEvents } from "@/lib/market-adapter"
 
 export default function MarketsPage() {
-    const {
-        events,
-        eventsLoading,
-        searchQuery,
-        filterBy,
-        sortBy,
-    } = useAppStore()
+    const { events: dashboardEvents, loadEvents, sortBy } = useAppStore();
 
-    const displayEvents = useMemo(() => {
-        if (!events) return []
+    const events = React.useMemo(() => {
+        return adaptDashboardEvents(dashboardEvents || []);
+    }, [dashboardEvents]);
 
-        // Filter
-        let filtered = events.filter(event => {
-            if (searchQuery) {
-                const matchesSearch = event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                    event.ticker.toLowerCase().includes(searchQuery.toLowerCase())
-                if (!matchesSearch) return false
-            }
-
-            if (filterBy === 'active') {
-                if (!event.active) return false
-            }
-
-            return true
-        })
-
-        // Sort
-        filtered.sort((a, b) => {
-            switch (sortBy) {
-                case 'newest':
-                    return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
-                case 'ending':
-                    return new Date(a.endDate).getTime() - new Date(b.endDate).getTime()
-                case 'trending':
-                    // Use 24h volume as proxy for trending if no explicit trending score
-                    return (b.volume24hr || 0) - (a.volume24hr || 0)
-                case 'volume':
-                default:
-                    return (b.volume || 0) - (a.volume || 0)
-            }
-        })
-
-        return filtered
-    }, [events, searchQuery, filterBy, sortBy])
+    useEffect(() => {
+        loadEvents();
+    }, [loadEvents, sortBy]);
 
     return (
-        <div className="flex flex-col gap-6">
-            <CategoryNav />
+        <div className="relative min-h-screen">
+            {/* Sticky Category/Filter Nav */}
+            <div className="sticky top-0 z-30 bg-background/80 backdrop-blur-md border-b">
+                <div className="p-4 py-2">
+                    <CategoryNav />
+                </div>
+            </div>
 
-            {eventsLoading ? (
-                <div className="flex justify-center py-20">
-                    <Loader2 className="h-10 w-10 animate-spin text-muted-foreground" />
+            {/* Content Area with Staggered Animation */}
+            <div className="p-4 md:p-6 space-y-6">
+                <div className="animate-in fade-in slide-in-from-bottom-8 duration-700 ease-out fill-mode-both">
+                    <MarketFeed events={events} />
                 </div>
-            ) : displayEvents.length === 0 ? (
-                <div className="text-center py-20 text-muted-foreground">
-                    No events found.
-                </div>
-            ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                    {displayEvents.map((event) => (
-                        <EventCard
-                            key={event.id}
-                            event={event}
-                        />
-                    ))}
-                </div>
-            )}
+            </div>
         </div>
     )
 }

@@ -16,13 +16,14 @@ export async function fetchCats(): Promise<Category[]> {
 }
 
 /**
- * Fetch events with optional category filter
+ * Fetch events with optional category filter and sorting
  */
-export async function fetchEvents(category?: string): Promise<Event[]> {
+export async function fetchEvents(category?: string, order?: string): Promise<Event[]> {
     const params = new URLSearchParams()
     if (category) params.set("cat", category)
+    if (order) params.set("order", order)
 
-    const url = `${API_BASE_URL}/events${params.toString() ? `?${params.toString()}` : ""}`
+    const url = `${API_BASE_URL}/events?${params.toString()}`
     const response = await fetch(url)
 
     if (!response.ok) {

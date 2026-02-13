@@ -18,7 +18,14 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 
-export function CategoryNav() {
+import { SortControls } from "./market-feed/sort-controls"
+import { LayoutGrid, List } from "lucide-react"
+
+interface CategoryNavProps {
+    hideControls?: boolean
+}
+
+export function CategoryNav({ hideControls }: CategoryNavProps) {
     const pathname = usePathname()
     const {
         topNav,
@@ -30,7 +37,9 @@ export function CategoryNav() {
         sortBy,
         setSortBy,
         filterBy,
-        setFilterBy
+        setFilterBy,
+        viewMode,
+        setViewMode
     } = useAppStore()
     const [selectedCategory, setSelectedCategory] = useState<string>("")
     const [selectedSubcat, setSelectedSubcat] = useState<string | null>(null)
@@ -107,8 +116,8 @@ export function CategoryNav() {
                     )}
                 </div>
 
-                {/* Search - Fixed Width (only on /markets) */}
-                {pathname === "/markets" && (
+                {/* Search - Fixed Width (only on /markets and if not hidden) */}
+                {pathname === "/markets" && !hideControls && (
                     <div className="flex-shrink-0 w-64 md:w-72">
                         <div className="relative">
                             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -125,7 +134,7 @@ export function CategoryNav() {
             </div>
 
             {/* Row 2: Subcategories + Controls */}
-            {(selectedCat?.related && selectedCat.related.length > 0) || pathname === "/markets" ? (
+            {(selectedCat?.related && selectedCat.related.length > 0) || (pathname === "/markets" && !hideControls) ? (
                 <div className="flex items-center gap-4 justify-between min-h-[36px]">
                     {/* Subcategories - Scrollable */}
                     <div className="flex-1 min-w-0 overflow-hidden">
@@ -149,31 +158,39 @@ export function CategoryNav() {
                         )}
                     </div>
 
-                    {/* Controls - Fixed (only on /markets) */}
-                    {pathname === "/markets" && (
+                    {/* Controls - Fixed (only on /markets and if not hidden) */}
+                    {pathname === "/markets" && !hideControls && (
                         <div className="flex items-center gap-2 flex-shrink-0">
                             <Button
-                                variant={filterBy && filterBy !== 'all' ? "secondary" : "outline"}
+                                variant={filterBy && filterBy !== 'all' ? "secondary" : "ghost"}
                                 size="sm"
                                 onClick={() => setFilterBy(filterBy === 'all' ? 'active' : 'all')}
-                                className="h-8 px-3 text-xs"
+                                className="h-8 px-2 text-xs"
                             >
-                                <Filter className="h-3.5 w-3.5 mr-1.5" />
+                                <Filter className="h-3.5 w-3.5 mr-1" />
                                 Filters
                             </Button>
 
-                            <Select value={sortBy} onValueChange={setSortBy}>
-                                <SelectTrigger className="h-8 w-[130px] text-xs">
-                                    <ArrowUpDown className="h-3.5 w-3.5 mr-1.5" />
-                                    <SelectValue placeholder="Sort by" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="volume" className="text-xs">Volume</SelectItem>
-                                    <SelectItem value="trending" className="text-xs">Trending</SelectItem>
-                                    <SelectItem value="newest" className="text-xs">Newest</SelectItem>
-                                    <SelectItem value="ending" className="text-xs">Ending Soon</SelectItem>
-                                </SelectContent>
-                            </Select>
+                            <SortControls />
+
+                            <div className="flex bg-muted p-1 rounded-lg ml-2">
+                                <Button
+                                    variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
+                                    size="sm"
+                                    className="h-7 w-7 p-0"
+                                    onClick={() => setViewMode('grid')}
+                                >
+                                    <LayoutGrid className="h-3.5 w-3.5" />
+                                </Button>
+                                <Button
+                                    variant={viewMode === 'table' ? 'secondary' : 'ghost'}
+                                    size="sm"
+                                    className="h-7 w-7 p-0"
+                                    onClick={() => setViewMode('table')}
+                                >
+                                    <List className="h-3.5 w-3.5" />
+                                </Button>
+                            </div>
                         </div>
                     )}
                 </div>

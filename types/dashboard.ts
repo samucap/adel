@@ -8,6 +8,7 @@ export interface Market {
     image: string;
     icon: string;
     description: string;
+    groupItemTitle?: string; // For Group/Election markets
     outcomes: string; // JSON string array "[\"Yes\", \"No\"]"
     outcomePrices: string; // JSON string array "[\"0.5\", \"0.5\"]"
     volume: string;
@@ -53,11 +54,13 @@ export interface Event {
     volume1yr: number;
     enableOrderBook: boolean;
     liquidityClob: number;
-    negRisk: boolean;
+    negRisk?: boolean;
     negRiskMarketID: string;
     commentCount: number;
     markets: Market[];
     imageOptimized: any;
+    teams?: { name: string; code: string; image: string }[];
+    type: 'binary' | 'sports' | 'election' | 'multi'; // API provided type
 }
 
 export interface UserPosition {

@@ -20,6 +20,7 @@ export const backupEvents: Event[] = [
     {
         id: "e1",
         ticker: "PRES24",
+        type: 'election',
         slug: "us-presidential-election-2024",
         title: "US Presidential Election 2024",
         description: "Who will win the 2024 US Presidential Election?",
@@ -80,6 +81,7 @@ export const backupEvents: Event[] = [
     {
         id: "e2",
         ticker: "SBLVIII",
+        type: 'sports',
         slug: "super-bowl-lviii",
         title: "Super Bowl LVIII",
         description: "Kansas City Chiefs vs San Francisco 49ers",
@@ -111,6 +113,10 @@ export const backupEvents: Event[] = [
         negRisk: true,
         negRiskMarketID: "",
         commentCount: 890,
+        teams: [
+            { name: "Kansas City Chiefs", code: "KC", image: "https://upload.wikimedia.org/wikipedia/en/e/e1/Kansas_City_Chiefs_logo.svg" },
+            { name: "San Francisco 49ers", code: "SF", image: "https://upload.wikimedia.org/wikipedia/commons/3/3a/San_Francisco_49ers_logo.svg" }
+        ],
         markets: [
             {
                 id: "m2",
@@ -140,6 +146,7 @@ export const backupEvents: Event[] = [
     {
         id: "e3",
         ticker: "BTC100K",
+        type: 'binary',
         slug: "bitcoin-100k",
         title: "Bitcoin $100K",
         description: "Will Bitcoin reach $100,000 in 2024?",

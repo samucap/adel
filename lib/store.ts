@@ -22,14 +22,18 @@ interface AppState {
     currMkt: Market | null
 
     // UI State - Filters and Sorting
+
+    // UI State - Filters and Sorting
     sortBy: string
     filterBy: string
+    viewMode: 'grid' | 'table'
 
     // Actions
     setCurrentEvent: (event: Event | null) => void
     setCurrentMarket: (market: Market | null) => void
     setSortBy: (value: string) => void
     setFilterBy: (value: string) => void
+    setViewMode: (value: 'grid' | 'table') => void
     searchQuery: string
     setSearchQuery: (query: string) => void
     loadCats: () => Promise<void>
@@ -37,7 +41,7 @@ interface AppState {
     loadMarket: (id: string) => Promise<void>
 }
 
-export const useAppStore = create<AppState>((set) => ({
+export const useAppStore = create<AppState>((set, get) => ({
     // Initial state
     topNav: [],
     currCat: "all",
@@ -54,6 +58,7 @@ export const useAppStore = create<AppState>((set) => ({
     // UI State
     sortBy: "volume",
     filterBy: "all",
+    viewMode: "grid",
 
     // Actions
     setCurrentEvent: (event) => set({ currEv: event }),
@@ -63,6 +68,8 @@ export const useAppStore = create<AppState>((set) => ({
     setSortBy: (value) => set({ sortBy: value }),
 
     setFilterBy: (value) => set({ filterBy: value }),
+
+    setViewMode: (value) => set({ viewMode: value }),
 
     searchQuery: "",
     setSearchQuery: (query: string) => set({ searchQuery: query }),
@@ -85,8 +92,9 @@ export const useAppStore = create<AppState>((set) => ({
 
     loadEvents: async (category?: string) => {
         set({ eventsLoading: true, eventsError: null })
+        const { sortBy } = get()
         try {
-            const events = await fetchEvents(category)
+            const events = await fetchEvents(category, sortBy)
             set({ events, eventsLoading: false })
         } catch (error) {
             const errorMsg = error instanceof Error ? error.message : "Failed to load events"
