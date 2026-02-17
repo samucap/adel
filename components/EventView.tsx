@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { Event, Market } from "@/types"
+import { CleanEvent, Outcome } from "@/types"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -13,19 +13,31 @@ import { ActivityFeed } from "@/components/dashboard/activity-feed"
 import { mockChartData, mockActivities } from "@/lib/mock-data"
 import { cn } from "@/lib/utils"
 
-export function EventView({ event }: { event: Event }) {
-    // State for selected market
-    const [selectedMarketId, setSelectedMarketId] = useState<string>(event.primaryMarket.id);
+export function EventView({ event }: { event: CleanEvent }) {
+    // State for selected outcome
+    const [selectedOutcomeId, setSelectedOutcomeId] = useState<string>(
+        event.displayData.outcomes?.[0]?.id ??
+        event.displayData.teams?.home?.id ??
+        event.displayData.teams?.away?.id ??
+        ""
+    );
 
-    // Flatten all markets for easy lookup
-    const allMarkets = useMemo(() => [event.primaryMarket, ...event.markets], [event]);
+    // Get all outcomes for easy lookup
+    const allOutcomes = useMemo(() => {
+        if (event.displayData.outcomes) {
+            return event.displayData.outcomes;
+        } else if (event.displayData.teams) {
+            return [event.displayData.teams.home, event.displayData.teams.away];
+        }
+        return [];
+    }, [event]);
 
-    // Derived current market
-    const currentMarket = useMemo(() =>
-        allMarkets.find(m => m.id === selectedMarketId) || event.primaryMarket,
-        [allMarkets, selectedMarketId]);
+    // Derived current outcome
+    const currentOutcome = useMemo(() =>
+        allOutcomes.find(o => o.id === selectedOutcomeId) || allOutcomes[0],
+        [allOutcomes, selectedOutcomeId]);
 
-    const isNegRisk = event.type === 'election';
+    const isNegRisk = event.layout === 'POLL';
 
     return (
         <div className="flex flex-col h-full">
@@ -37,14 +49,14 @@ export function EventView({ event }: { event: Event }) {
                     </Link>
                     <div>
                         <div className="flex items-center gap-2">
-                            {event.type === 'sports' && <Trophy className="w-4 h-4 text-amber-500" />}
-                            <h1 className="text-xl font-bold tracking-tight">{event.title} <span className="text-muted-foreground font-normal">/ {currentMarket.question}</span></h1>
+                            {event.layout === 'SPORTS' && <Trophy className="w-4 h-4 text-amber-500" />}
+                            <h1 className="text-xl font-bold tracking-tight">{event.title} <span className="text-muted-foreground font-normal">/ {currentOutcome?.label || 'Unknown'}</span></h1>
                             {/* Category Badge if needed, but we have title context */}
-                            {isNegRisk && <Badge variant="destructive" className="text-[10px]">Negative Risk</Badge>}
+                            {isNegRisk && <Badge variant="destructive" className="text-[10px]">Poll</Badge>}
                         </div>
                         <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
                             <span className="flex items-center gap-1">
-                                <Clock className="w-3 h-3" /> Ends {event.startDate}
+                                <Clock className="w-3 h-3" /> {event.isLive ? 'Live' : 'Upcoming'}
                             </span>
                             <span className="flex items-center gap-1">
                                 <DollarSign className="w-3 h-3" /> Vol: {event.stats.volumeUSD}
@@ -53,11 +65,10 @@ export function EventView({ event }: { event: Event }) {
                     </div>
                 </div>
                 <div className="flex items-center gap-3">
-                    {/* Highest Prob Display for Current Market */}
+                    {/* Highest Prob Display for Current Outcome */}
                     <div className="text-right hidden md:block">
                         <div className="text-2xl font-mono font-bold text-amber-500">
-                            {/* Logic to get highest prob outcome price */}
-                            {Math.round(Math.max(...currentMarket.outcomes.map(o => o.price)) * 100)}%
+                            {currentOutcome ? Math.round(currentOutcome.price * 100) : 0}%
                         </div>
                         <div className="text-xs text-muted-foreground">Probability</div>
                     </div>
@@ -114,39 +125,31 @@ export function EventView({ event }: { event: Event }) {
                             <CardTitle>Markets</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-3">
-                            {allMarkets.map(market => {
-                                const yesOutcome = market.outcomes.find(o => o.label === 'Yes') || market.outcomes[0];
-                                const noOutcome = market.outcomes.find(o => o.label === 'No');
-                                const yesPrice = yesOutcome ? Math.round(yesOutcome.price * 100) : 0;
-                                const noPrice = noOutcome ? Math.round(noOutcome.price * 100) : (100 - yesPrice);
+                            {allOutcomes.map(outcome => {
+                                const price = Math.round(outcome.price * 100);
 
                                 return (
                                     <div
-                                        key={market.id}
-                                        onClick={() => setSelectedMarketId(market.id)}
+                                        key={outcome.id}
+                                        onClick={() => setSelectedOutcomeId(outcome.id || "")}
                                         className={cn(
                                             "group p-3 rounded-lg border transition-all cursor-pointer",
-                                            selectedMarketId === market.id
+                                            selectedOutcomeId === (outcome.id || "")
                                                 ? "border-primary bg-primary/5 ring-1 ring-primary/20"
                                                 : "bg-card hover:border-primary/50"
                                         )}
                                     >
                                         <div className="flex justify-between items-start mb-2">
                                             <span className="font-medium text-sm line-clamp-2">
-                                                {market.groupItemTitle || market.question}
+                                                {outcome.label}
                                             </span>
                                             <span className="font-mono font-bold text-primary">
-                                                {yesPrice}%
+                                                {price}%
                                             </span>
                                         </div>
                                         <div className="flex gap-2 pointer-events-none">
-                                            {/* Pointer events none because the whole card selects the market for now. 
-                                                Trade buttons would go here in a real implementation. */}
-                                            <div className="flex-1 bg-green-500/10 text-green-500 border border-green-500/20 text-xs py-1 px-2 rounded text-center">
-                                                Yes {yesPrice}¢
-                                            </div>
-                                            <div className="flex-1 bg-red-500/10 text-red-500 border border-red-500/20 text-xs py-1 px-2 rounded text-center">
-                                                No {noPrice}¢
+                                            <div className="flex-1 bg-primary/10 text-primary border border-primary/20 text-xs py-1 px-2 rounded text-center">
+                                                {outcome.label} {price}¢
                                             </div>
                                         </div>
                                     </div>

@@ -1,7 +1,31 @@
 import { create } from "zustand"
-import { Event, Market, Category } from "@/types/dashboard"
+import { Market, Category } from "@/types/dashboard"
+import { CleanEvent } from "@/types"
 import { fetchCats, fetchEvents, fetchMarketById } from "./services"
-import { backupCategories, backupEvents } from "./backup-data"
+import { backupCategories } from "./backup-data"
+import { MOCK_CLEAN_EVENTS } from "@/components/market-feed/mock-data"
+
+export interface FilterOptions {
+    tag_id?: string
+    // Time remaining
+    end_date_max?: string       // ISO date string upper bound
+    // Created date  
+    start_date_min?: string     // ISO date string lower bound
+    // Outcome prices
+    outcome_price_min?: number  // decimal 0-1
+    outcome_price_max?: number
+    // Min Spread (cents → basis points for API)
+    spread_max?: number
+    // Min Volume
+    volumeMin?: number
+    // Min Liquidity
+    liquidityMin?: number
+    // Min Daily Reward
+    rewardMin?: number
+    // Status
+    active?: boolean
+    closed?: boolean
+}
 
 interface AppState {
     // Top navigation - list of categories from API
@@ -11,29 +35,32 @@ interface AppState {
     currCat: string
 
     // Events list
-    events: Event[]
+    events: CleanEvent[]
     eventsLoading: boolean
     eventsError: string | null
 
     // Current selected event
-    currEv: Event | null
+    currEv: CleanEvent | null
 
     // Current selected market
     currMkt: Market | null
 
     // UI State - Filters and Sorting
-
-    // UI State - Filters and Sorting
     sortBy: string
+    sortOrder: 'asc' | 'desc'
     filterBy: string
     viewMode: 'grid' | 'table'
+    filters: FilterOptions
 
     // Actions
-    setCurrentEvent: (event: Event | null) => void
+    setCurrentEvent: (event: CleanEvent | null) => void
     setCurrentMarket: (market: Market | null) => void
     setSortBy: (value: string) => void
+    setSortOrder: (value: 'asc' | 'desc') => void
     setFilterBy: (value: string) => void
     setViewMode: (value: 'grid' | 'table') => void
+    setFilters: (filters: FilterOptions) => void
+    clearFilters: () => void
     searchQuery: string
     setSearchQuery: (query: string) => void
     loadCats: () => Promise<void>
@@ -56,9 +83,11 @@ export const useAppStore = create<AppState>((set, get) => ({
     currMkt: null,
 
     // UI State
-    sortBy: "volume",
+    sortBy: "volume24hr",
+    sortOrder: "desc" as const,
     filterBy: "all",
     viewMode: "grid",
+    filters: {},
 
     // Actions
     setCurrentEvent: (event) => set({ currEv: event }),
@@ -67,9 +96,14 @@ export const useAppStore = create<AppState>((set, get) => ({
 
     setSortBy: (value) => set({ sortBy: value }),
 
+    setSortOrder: (value) => set({ sortOrder: value }),
+
     setFilterBy: (value) => set({ filterBy: value }),
 
     setViewMode: (value) => set({ viewMode: value }),
+
+    setFilters: (filters) => set({ filters }),
+    clearFilters: () => set({ filters: {} }),
 
     searchQuery: "",
     setSearchQuery: (query: string) => set({ searchQuery: query }),
@@ -91,19 +125,24 @@ export const useAppStore = create<AppState>((set, get) => ({
     },
 
     loadEvents: async (category?: string) => {
+        // Persist category if provided, otherwise use the stored one
+        if (category) {
+            set({ currCat: category })
+        }
+        const activeCat = category || get().currCat
         set({ eventsLoading: true, eventsError: null })
-        const { sortBy } = get()
         try {
-            const events = await fetchEvents(category, sortBy)
+            const { filters, sortBy, sortOrder } = get()
+            const catParam = activeCat !== "all" ? activeCat : undefined
+            const events = await fetchEvents(catParam, filters, sortBy, sortOrder === 'asc')
             set({ events, eventsLoading: false })
         } catch (error) {
             const errorMsg = error instanceof Error ? error.message : "Failed to load events"
             console.error("Failed to load events:", error)
-            // Fallback to backup data
             set({
-                events: backupEvents,
+                events: MOCK_CLEAN_EVENTS,
                 eventsLoading: false,
-                eventsError: `Connection error: ${errorMsg}. Using stale data.`
+                eventsError: errorMsg
             })
         }
     },

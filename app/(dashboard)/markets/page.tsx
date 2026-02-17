@@ -4,18 +4,14 @@ import React, { useEffect } from "react"
 import { CategoryNav } from "@/components/category-nav"
 import { MarketFeed } from "@/components/market-feed/market-feed"
 import { useAppStore } from "@/lib/store"
-import { adaptDashboardEvents } from "@/lib/market-adapter"
 
 export default function MarketsPage() {
-    const { events: dashboardEvents, loadEvents, sortBy } = useAppStore();
+    const { events, eventsLoading, eventsError, loadEvents } = useAppStore();
 
-    const events = React.useMemo(() => {
-        return adaptDashboardEvents(dashboardEvents || []);
-    }, [dashboardEvents]);
-
+    // Load all events on mount
     useEffect(() => {
         loadEvents();
-    }, [loadEvents, sortBy]);
+    }, [loadEvents]);
 
     return (
         <div className="relative min-h-screen">
@@ -28,9 +24,20 @@ export default function MarketsPage() {
 
             {/* Content Area with Staggered Animation */}
             <div className="p-4 md:p-6 space-y-6">
-                <div className="animate-in fade-in slide-in-from-bottom-8 duration-700 ease-out fill-mode-both">
-                    <MarketFeed events={events} />
-                </div>
+                {eventsLoading ? (
+                    <div className="py-20 text-center text-muted-foreground">
+                        <div className="animate-pulse">Loading markets...</div>
+                    </div>
+                ) : eventsError ? (
+                    <div className="py-20 text-center">
+                        <div className="text-red-400 mb-2">Failed to load markets</div>
+                        <div className="text-sm text-muted-foreground">{eventsError}</div>
+                    </div>
+                ) : (
+                    <div className="animate-in fade-in slide-in-from-bottom-8 duration-700 ease-out fill-mode-both">
+                        <MarketFeed events={events} />
+                    </div>
+                )}
             </div>
         </div>
     )

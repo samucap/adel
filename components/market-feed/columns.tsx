@@ -1,7 +1,7 @@
 "use client"
 
 import { ColumnDef } from "@tanstack/react-table"
-import { Event } from "@/types"
+import { CleanEvent } from "@/types"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import { ArrowUpDown, MoreHorizontal } from "lucide-react"
@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button"
 import { SafeImage } from "./safe-image"
 import Link from "next/link"
 
-export const columns: ColumnDef<Event>[] = [
+export const columns: ColumnDef<CleanEvent>[] = [
     {
         accessorKey: "title",
         header: ({ column }) => {
@@ -32,9 +32,7 @@ export const columns: ColumnDef<Event>[] = [
                     </div>
                     <div className="flex flex-col max-w-[300px]">
                         <span className="font-medium truncate">{event.title}</span>
-                        {event.primaryMarket?.question && (
-                            <span className="text-xs text-muted-foreground truncate">{event.primaryMarket.question}</span>
-                        )}
+                        <span className="text-xs text-muted-foreground truncate">{event.ticker}</span>
                     </div>
                 </Link>
             )
@@ -56,29 +54,30 @@ export const columns: ColumnDef<Event>[] = [
         }
     },
     {
-        accessorKey: "liquidity",
-        header: "Liquidity",
+        accessorKey: "stats.spreadBP",
+        header: "Spread",
         cell: ({ row }) => {
-            // Placeholder logic or use real data if mapped
-            const liq = row.original.liquidityClob || 0;
-            return <div className="font-mono">${liq.toLocaleString()}</div>
+            const spread = row.original.stats.spreadBP || 0;
+            return <div className="font-mono">{spread}bp</div>
         }
     },
     {
-        accessorKey: "startDate", // Using startDate as End Date for now or logic
+        id: "endDate",
         header: "End Date",
         cell: ({ row }) => {
-            return <div className="text-muted-foreground">{row.original.startDate}</div>
+            // CleanEvent doesn't have startDate currently, show placeholder
+            return <div className="text-muted-foreground">TBD</div>
         }
     },
     {
-        accessorKey: "stats.change24h",
+        id: "change",
         header: "24h",
         cell: ({ row }) => {
-            const change = row.original.stats.change24h;
+            // CleanEvent doesn't have change24h, use outcomes change if available
+            const change = row.original.displayData.outcomes?.[0]?.change24h || 0;
             return (
                 <div className={change >= 0 ? "text-green-500" : "text-red-500"}>
-                    {change > 0 && "+"}{change}%
+                    {change > 0 && "+"}{(change * 100).toFixed(1)}%
                 </div>
             )
         }
@@ -87,7 +86,7 @@ export const columns: ColumnDef<Event>[] = [
         id: "probability",
         header: "Prob",
         cell: ({ row }) => {
-            const outcome = row.original.primaryMarket?.outcomes?.[0]; // Simplification
+            const outcome = row.original.displayData.outcomes?.[0] || row.original.displayData.teams?.home || row.original.displayData.teams?.away;
             return (
                 <div className="font-bold text-primary">
                     {outcome ? Math.round(outcome.price * 100) : 0}%

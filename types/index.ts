@@ -1,87 +1,51 @@
 
-/** 
- * Event types supported by the API
- * - binary: Single Yes/No question
- * - sports: Match with moneyline, spreads, maps
- * - election: Mutually exclusive candidates (negRisk) - only ONE wins
- * - multi: Group of independent questions - ANY can be Yes
- */
-export type EventType = 'binary' | 'sports' | 'election' | 'multi';
 
-/** Sports market subtypes */
-export type SportsMarketType = 'moneyline' | 'spread' | 'total' | 'map_handicap' | 'map';
+// --- Clean Event Data Contract ---
 
+export type LayoutType = 'POLL' | 'SPORTS' | 'SPORTS_GROUP' | 'BINARY';
+
+export interface Outcome {
+    id?: string;         // Optional - generated during mapping if not provided by API
+    label: string;       // e.g. "Trump" or "Yes"
+    price: number;       // 0.55 (0.00 - 1.00)
+    image?: string;      // URL for candidate/team logo
+    color?: string;      // Hex color from API for visual differentiation
+    change24h?: number;  // 0.05 (+5%)
+    isWinner?: boolean;  // If true, highlight this row (Backend calculated)
+    sportsMarketType?: string; // For sports events: "winner", "over/under", etc.
+}
+
+/** Stats for the CleanEvent contract */
 export interface MarketStats {
-    volumeUSD: string;
-    liquidityRating: 'low' | 'med' | 'high';
-    spreadBp?: number | null;
-    change24h: number;
-    isHot: boolean;
+    volumeUSD: string;       // "$1.2m" (Pre-formatted string)
+    spreadBP?: number;       // Basis Points (e.g., 15)
+    isWhaleAction?: boolean; // True = Whale activity indicator from API
 }
 
-/**
- * A single outcome within a market
- */
-export interface MarketOutcome {
-    /** Display label for this outcome */
-    label: string;
-    /** Probability as decimal (0.0 to 1.0) */
-    price: number;
-    /** Optional image for the outcome (Frontend extension) */
-    image?: string;
+/** Participant for enriched display data */
+export interface Participant {
+    name: string;
+    imageUrl: string;
+    color?: string;
+    role: 'home' | 'away' | 'player_1' | 'player_2';
+    probability?: number;    // Optional - planned API addition, handle gracefully
 }
 
-/**
- * A market within an event
- */
-export interface Market {
-    /** Unique market identifier */
+export interface CleanEvent {
     id: string;
-    /** Market question */
-    question: string;
-    /** For elections: candidate name. For sports: market label */
-    groupItemTitle?: string;
-    /** For sports: type of market */
-    marketType?: SportsMarketType;
-    /** Possible outcomes */
-    outcomes: MarketOutcome[];
-    /** Market liquidity */
-    liquidity?: number;
-}
-
-/**
- * An event from the /events endpoint (Orion API)
- */
-export interface Event {
-    /** Unique event identifier */
-    id: string;
-    /** Classification for UI rendering logic */
-    type: EventType;
-    /** Event title */
     title: string;
-    /** URL-safe identifier */
-    slug: string;
-    /** ISO 8601 date string */
-    startDate: string;
-    /** Event image URL */
-    image?: string;
-
-    /** Primary market for this event */
-    primaryMarket: Market;
-
-    /** Secondary markets */
-    markets: Market[];
-
-    // --- Frontend Extensions (Computed by Adapter) ---
+    ticker: string;          // "TRUMP-2024"
+    layout: LayoutType;
+    isLive: boolean;         // True = Green Dot, False = Gray
+    image?: string;          // Event thumbnail image
     stats: MarketStats;
-    teams?: { name: string; code: string; image: string }[];
-    chartData?: number[];
-    featured?: boolean;
-    liquidityClob?: number;
-    rewards?: {
-        minSize: number;
-        maxSpread: number;
-        amount: number;
+    statusBadge?: string;    // e.g. "HOT" - optional badge from API
+
+    // The backend puts the correct data here based on layout.
+    // You just render what exists.
+    displayData: {
+        outcomes?: Outcome[];          // ALL types (now including SPORTS)
+        participants?: Participant[];   // SPORTS and SPORTS_GROUP (enrichment)
     };
-    negRisk?: boolean;
 }
+

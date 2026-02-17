@@ -1,15 +1,10 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useAppStore } from '@/lib/store';
-import { Event } from '@/types';
+import { CleanEvent } from '@/types';
 import { EventCard } from './event-card';
-import { DataTable } from './data-table';
-import { columns } from './columns';
-import { Button } from '@/components/ui/button';
-import { LayoutGrid, List } from 'lucide-react';
-import { SortControls } from './sort-controls';
 
 interface MarketFeedProps {
-    events: Event[];
+    events: CleanEvent[];
 }
 
 // Memoized EventCard for performance
@@ -20,8 +15,6 @@ export function MarketFeed({ events }: MarketFeedProps) {
 
     return (
         <div className="space-y-4">
-            {/* Header removed as controls are moved to CategoryNav */}
-
             {viewMode === 'grid' ? (
                 <div className="grid gap-4 grid-cols-[repeat(auto-fill,minmax(320px,1fr))]">
                     {events.map(event => (
@@ -29,7 +22,9 @@ export function MarketFeed({ events }: MarketFeedProps) {
                     ))}
                 </div>
             ) : (
-                <DataTable columns={columns} data={events} />
+                <div className="p-4 border rounded bg-muted/20 text-center">
+                    Table view temporarily unavailable during migration.
+                </div>
             )}
 
             {events.length === 0 && (
@@ -40,3 +35,4 @@ export function MarketFeed({ events }: MarketFeedProps) {
         </div>
     );
 }
+
