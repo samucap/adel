@@ -16,20 +16,12 @@ import { cn } from "@/lib/utils"
 export function EventView({ event }: { event: CleanEvent }) {
     // State for selected outcome
     const [selectedOutcomeId, setSelectedOutcomeId] = useState<string>(
-        event.displayData.outcomes?.[0]?.id ??
-        event.displayData.teams?.home?.id ??
-        event.displayData.teams?.away?.id ??
-        ""
+        event.displayData.outcomes?.[0]?.id ?? ""
     );
 
     // Get all outcomes for easy lookup
     const allOutcomes = useMemo(() => {
-        if (event.displayData.outcomes) {
-            return event.displayData.outcomes;
-        } else if (event.displayData.teams) {
-            return [event.displayData.teams.home, event.displayData.teams.away];
-        }
-        return [];
+        return event.displayData.outcomes ?? [];
     }, [event]);
 
     // Derived current outcome

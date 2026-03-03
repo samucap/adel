@@ -40,8 +40,9 @@ import {
   ChartNetwork,
 } from "lucide-react";
 import { useStore } from "@/hooks/use-store";
+import { useAuthStore } from "@/stores/authStore";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 // ─── Rail Button Component ─────────────────────────────────────
 function RailButton({
@@ -93,12 +94,14 @@ function SidebarPanel({
   activeSection,
   navData,
   pathname,
+  onLogout,
 }: {
   open: boolean;
   onClose: () => void;
   activeSection: string | null;
   navData: typeof defaultNavData;
   pathname: string;
+  onLogout: () => void;
 }) {
   const { user } = useStore();
   const [expandedItems, setExpandedItems] = React.useState<Record<string, boolean>>({
@@ -235,7 +238,7 @@ function SidebarPanel({
                 <DropdownMenuItem>Settings</DropdownMenuItem>
               </DropdownMenuGroup>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>Log out</DropdownMenuItem>
+              <DropdownMenuItem onClick={onLogout}>Log out</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -289,13 +292,29 @@ const defaultNavData = {
 // ─── Main AppSidebar Component ─────────────────────────────────
 export function AppSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const { user } = useStore();
+  const authLogout = useAuthStore((s) => s.logout);
+  const authUser = useAuthStore((s) => s.user);
   const [panelOpen, setPanelOpen] = React.useState(false);
   const [activeSection, setActiveSection] = React.useState<string | null>(null);
   const [dropdownOpen, setDropdownOpen] = React.useState(false);
   const closeTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const navData = defaultNavData;
+  const navData = {
+    ...defaultNavData,
+    user: {
+      ...defaultNavData.user,
+      name: authUser?.name ?? defaultNavData.user.name,
+      email: authUser?.email ?? defaultNavData.user.email,
+      avatar: authUser?.avatar ?? defaultNavData.user.avatar,
+    },
+  };
+
+  const handleLogout = () => {
+    authLogout();
+    router.replace("/login");
+  };
 
   const keepOpen = () => {
     if (closeTimeoutRef.current) {
@@ -441,7 +460,7 @@ export function AppSidebar() {
                   <DropdownMenuItem>Settings</DropdownMenuItem>
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>Log out</DropdownMenuItem>
+                <DropdownMenuItem onClick={handleLogout}>Log out</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -454,6 +473,7 @@ export function AppSidebar() {
           activeSection={activeSection}
           navData={navData}
           pathname={pathname}
+          onLogout={handleLogout}
         />
       </div>
     </TooltipProvider>

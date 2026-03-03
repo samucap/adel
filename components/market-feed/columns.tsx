@@ -86,7 +86,7 @@ export const columns: ColumnDef<CleanEvent>[] = [
         id: "probability",
         header: "Prob",
         cell: ({ row }) => {
-            const outcome = row.original.displayData.outcomes?.[0] || row.original.displayData.teams?.home || row.original.displayData.teams?.away;
+            const outcome = row.original.displayData.outcomes?.[0];
             return (
                 <div className="font-bold text-primary">
                     {outcome ? Math.round(outcome.price * 100) : 0}%

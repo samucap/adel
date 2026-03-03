@@ -2,7 +2,7 @@
 
 import { NavLayout } from "@/components/nav-layout"
 import { DashboardContainer } from "@/components/dashboard/dashboard-container"
-import { useAppStore } from "@/lib/store"
+import { AuthGuard } from "@/components/auth/AuthGuard"
 import { usePathname } from "next/navigation"
 
 export default function DashboardLayout({
@@ -15,16 +15,18 @@ export default function DashboardLayout({
     const isMarketsPage = pathname === '/markets' || pathname?.startsWith('/markets/')
 
     return (
-        <NavLayout>
-            <DashboardContainer
-                disableScroll={false} // Allow main page to scroll naturally
-                showFilters={false}
-                showSort={false}
-                showSearch={false}
-            >
-                {children}
-            </DashboardContainer>
-        </NavLayout>
+        <AuthGuard>
+            <NavLayout>
+                <DashboardContainer
+                    disableScroll={false} // Allow main page to scroll naturally
+                    showFilters={false}
+                    showSort={false}
+                    showSearch={false}
+                >
+                    {children}
+                </DashboardContainer>
+            </NavLayout>
+        </AuthGuard>
     )
 }
 
