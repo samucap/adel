@@ -46,7 +46,7 @@ export function SportsGroupLayout({ event }: SportsGroupLayoutProps) {
                                 "rounded-full overflow-hidden border-2 flex items-center justify-center",
                                 isFavorite ? "h-9 w-9 border-green-500/40" : "h-7 w-7 border-white/20"
                             )}
-                            style={teamColor && !isFavorite ? { borderColor: teamColor } : undefined}
+                                style={teamColor && !isFavorite ? { borderColor: teamColor } : undefined}
                             >
                                 {imgSrc ? (
                                     <SafeImage
@@ -67,7 +67,7 @@ export function SportsGroupLayout({ event }: SportsGroupLayoutProps) {
                             {/* Probability */}
                             <div className={cn(
                                 "text-center",
-                                isFavorite ? "text-sm font-bold text-green-400" : "text-xs font-semibold"
+                                isFavorite ? "text-sm font-bold text-green-400" : "text-xs font-semibold text-red-400"
                             )}>
                                 {percent}%
                             </div>

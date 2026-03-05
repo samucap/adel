@@ -2,7 +2,6 @@ import { create } from "zustand"
 import { Market, Category } from "@/types/dashboard"
 import { CleanEvent } from "@/types"
 import { fetchCats, fetchEvents, fetchMarketById } from "./services"
-import { backupCategories } from "./backup-data"
 import { MOCK_CLEAN_EVENTS } from "@/components/market-feed/mock-data"
 
 export interface FilterOptions {
@@ -115,11 +114,10 @@ export const useAppStore = create<AppState>((set, get) => ({
             set({ topNav: categories, topNavLoading: false })
         } catch (error) {
             console.error("Failed to load categories:", error)
-            // Fallback to backup data
             set({
-                topNav: backupCategories,
+                topNav: [],
                 topNavLoading: false,
-                topNavError: "API connection failed. Showing offline mode."
+                topNavError: "API connection failed."
             })
         }
     },

@@ -37,9 +37,14 @@ export interface CleanEvent {
     ticker: string;          // "TRUMP-2024"
     layout: LayoutType;
     isLive: boolean;         // True = Green Dot, False = Gray
+    endDate: string;         // ISO date string
+    startTime: string;         // ISO date string
     image?: string;          // Event thumbnail image
     stats: MarketStats;
     statusBadge?: string;    // e.g. "HOT" - optional badge from API
+    volume24hrClob: number;
+    liquidityClob: number;
+    liquidity: number;
 
     // The backend puts the correct data here based on layout.
     // You just render what exists.

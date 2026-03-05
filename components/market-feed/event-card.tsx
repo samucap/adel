@@ -1,10 +1,10 @@
 "use client";
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { CleanEvent } from '@/types';
 import { Card } from '@/components/ui/card';
-import { AlertTriangle, Activity, TrendingUp } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { AlertTriangle, Activity, TrendingUp, TrendingDown } from 'lucide-react';
+import { cn, formatTimeRemaining, formatCurrency } from '@/lib/utils';
 import { PollLayout } from './views/poll-layout';
 import { SportsLayout } from './views/sports-layout';
 import { SportsGroupLayout } from './views/sports-group-layout';
@@ -25,11 +25,25 @@ export function EventCard({ event }: EventCardProps) {
         isLive,
         image,
         stats,
-        statusBadge
+        statusBadge,
+        volume24hrClob,
+        liquidity,
     } = event;
 
     const { volumeUSD, spreadBP = 0 } = stats;
     const isDisputed = statusBadge === 'DISPUTED';
+    const timeRemaining = useMemo(() => {
+        const now = new Date();
+        const startTime = new Date(event.startTime);
+        const endDate = new Date(event.endDate);
+        if (now < startTime) {
+            return formatTimeRemaining(startTime.getTime() - now.getTime());
+        } else if (now > endDate) {
+            return formatTimeRemaining(endDate.getTime() - now.getTime());
+        } else {
+            return 0;
+        }
+    }, [event.startTime, event.endDate]);
 
     const renderContent = () => {
         switch (layout) {
@@ -71,9 +85,6 @@ export function EventCard({ event }: EventCardProps) {
                         <div className="space-y-1 flex-1 min-w-0">
                             {/* Ticker & Live Status */}
                             <div className="flex items-center gap-2">
-                                <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest">
-                                    {ticker}
-                                </span>
                                 {isLive && (
                                     <span className="relative flex h-2 w-2">
                                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
@@ -109,13 +120,16 @@ export function EventCard({ event }: EventCardProps) {
                     </div>
                 </div>
 
+
                 {/* Footer / Stats */}
                 <div className="p-3 mt-auto border-t border-white/5 bg-black/20 flex justify-between items-center text-[10px] text-muted-foreground">
                     <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-1">
-                            <TrendingUp className="h-3 w-3 text-white/40" />
-                            <span className="font-mono text-white/70">{volumeUSD} Vol</span>
-                        </div>
+                        <Badge variant="outline" className="h-5 px-1.5 gap-1 text-[10px] text-amber-400 border-amber-500/30 bg-amber-500/10 uppercase font-bold tracking-wider">
+                            <span className="font-mono">{formatCurrency(volume24hrClob, "USD")} Vol</span>
+                        </Badge>
+                        <Badge>{formatCurrency(liquidity, "USD")} Liq</Badge>
+                        <Badge>{timeRemaining} Remaining</Badge>
+
                     </div>
                 </div>
             </Card>

@@ -12,6 +12,11 @@ const BASE_CLEAN_EVENTS: CleanEvent[] = [
             volumeUSD: "$8.1m",
             spreadBP: 10
         },
+        volume24hrClob: 8100000,
+        liquidityClob: 1500000,
+        oneHourPriceChange: 0.05,
+        oneDayPriceChange: -0.02,
+        lastTradePrice: 0.72,
         displayData: {
             outcomes: [
                 { id: "o1", label: "Donald Trump", price: 0.72, image: "https://images.unsplash.com/photo-1540910419868-47ed94a0b462?auto=format&fit=crop&q=80&w=200&h=200", change24h: 0.05 },
@@ -32,6 +37,11 @@ const BASE_CLEAN_EVENTS: CleanEvent[] = [
             volumeUSD: "$5.4m",
             spreadBP: 20
         },
+        volume24hrClob: 5400000,
+        liquidityClob: 800000,
+        oneHourPriceChange: 0.01,
+        oneDayPriceChange: 0.03,
+        lastTradePrice: 0.52,
         displayData: {
             outcomes: [
                 { id: "o_kc", label: "Chiefs", price: 0.52, sportsMarketType: "winner" },
@@ -54,6 +64,11 @@ const BASE_CLEAN_EVENTS: CleanEvent[] = [
             volumeUSD: "$3.2m",
             spreadBP: 15
         },
+        volume24hrClob: 3200000,
+        liquidityClob: 500000,
+        oneHourPriceChange: -0.01,
+        oneDayPriceChange: -0.05,
+        lastTradePrice: 0.45,
         displayData: {
             outcomes: [
                 { id: "o_ars", label: "Arsenal", price: 0.45, sportsMarketType: "winner" },
@@ -77,6 +92,11 @@ const BASE_CLEAN_EVENTS: CleanEvent[] = [
             volumeUSD: "$2.5m",
             spreadBP: 120
         },
+        volume24hrClob: 2500000,
+        liquidityClob: 300000,
+        oneHourPriceChange: 0.02,
+        oneDayPriceChange: 0.10,
+        lastTradePrice: 0.45,
         displayData: {
             outcomes: [
                 { id: "o_yes", label: "Yes", price: 0.45, change24h: 0.12 }

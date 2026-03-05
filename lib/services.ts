@@ -34,6 +34,10 @@ export async function fetchMarketById(id: string): Promise<Market | null> {
  * API response shape from /events-v2 (matches orion2.0 V2Event)
  */
 interface EventResponse {
+    endDate: string;
+    startTime: string;
+    liquidityClob: number;
+    liquidity: number;
     id: string;
     title: string;
     subtitle?: string;
@@ -145,6 +149,7 @@ export async function fetchEvents(category?: string, filters?: FilterOptions, or
         }));
 
         // Use server-provided data directly (simplified!)
+        // TODO: need to return event object per types definition
         return {
             id: event.id,
             title: event.title,
@@ -154,14 +159,19 @@ export async function fetchEvents(category?: string, filters?: FilterOptions, or
             image: event.image,
             statusBadge: event.statusBadge,          // Direct from API
             stats: {
-                volumeUSD: event.stats.volumeUSD,    // Direct from API
-                spreadBP: event.stats.spreadBP,       // Direct from API
-                isWhaleAction: event.stats.isWhaleAction, // Direct from API
+                volumeUSD: event.stats?.volumeUSD || "0",    // Direct from API
+                spreadBP: event.stats?.spreadBP,       // Direct from API
+                isWhaleAction: event.stats?.isWhaleAction, // Direct from API
             },
+            volume24hrClob: event.totalVolume || 0,
+            liquidityClob: event.liquidityClob || 0,
+            liquidity: event.liquidity || 0,
             displayData: {
                 outcomes,                           // ALL types now
                 participants,                       // Sports enrichment
             },
+            endDate: event.endDate,
+            startTime: event.startTime,
         };
     });
 }
