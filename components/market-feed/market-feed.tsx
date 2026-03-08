@@ -22,6 +22,9 @@ export function MarketFeed({ events }: MarketFeedProps) {
                     ))}
                 </div>
             ) : (
+                //TODO: add data table view
+                // table headers: Market (outcome.label|market.groupItemTitle), prices (yes in green/no in red prices),
+                // volume (clob), liquidity (clob), start date if now < start date, else timer for time remaining (endDate - now)
                 <div className="p-4 border rounded bg-muted/20 text-center">
                     Table view temporarily unavailable during migration.
                 </div>

@@ -3,6 +3,7 @@ import { Market, Category } from "@/types/dashboard"
 import { CleanEvent } from "@/types"
 import { fetchCats, fetchEvents, fetchMarketById } from "./services"
 import { MOCK_CLEAN_EVENTS } from "@/components/market-feed/mock-data"
+import { useEventStore } from "@/stores/eventStore"
 
 export interface FilterOptions {
     tag_id?: string
@@ -38,12 +39,6 @@ interface AppState {
     eventsLoading: boolean
     eventsError: string | null
 
-    // Current selected event
-    currEv: CleanEvent | null
-
-    // Current selected market
-    currMkt: Market | null
-
     // UI State - Filters and Sorting
     sortBy: string
     sortOrder: 'asc' | 'desc'
@@ -52,8 +47,6 @@ interface AppState {
     filters: FilterOptions
 
     // Actions
-    setCurrentEvent: (event: CleanEvent | null) => void
-    setCurrentMarket: (market: Market | null) => void
     setSortBy: (value: string) => void
     setSortOrder: (value: 'asc' | 'desc') => void
     setFilterBy: (value: string) => void
@@ -65,6 +58,9 @@ interface AppState {
     loadCats: () => Promise<void>
     loadEvents: (category?: string) => Promise<void>
     loadMarket: (id: string) => Promise<void>
+
+    // Event navigation helper
+    navigateToEvent: (eventId: string) => void
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -78,9 +74,6 @@ export const useAppStore = create<AppState>((set, get) => ({
     eventsLoading: false,
     eventsError: null,
 
-    currEv: null,
-    currMkt: null,
-
     // UI State
     sortBy: "volume24hr",
     sortOrder: "desc" as const,
@@ -89,10 +82,6 @@ export const useAppStore = create<AppState>((set, get) => ({
     filters: {},
 
     // Actions
-    setCurrentEvent: (event) => set({ currEv: event }),
-
-    setCurrentMarket: (market) => set({ currMkt: market }),
-
     setSortBy: (value) => set({ sortBy: value }),
 
     setSortOrder: (value) => set({ sortOrder: value }),
@@ -148,10 +137,19 @@ export const useAppStore = create<AppState>((set, get) => ({
     loadMarket: async (id: string) => {
         try {
             const market = await fetchMarketById(id)
-            set({ currMkt: market })
+            // Note: currMkt is now handled by eventStore
+            console.log("Market loaded:", market)
         } catch (error) {
             console.error("Failed to load market:", error)
-            set({ currMkt: null })
+        }
+    },
+
+    // Navigate to event and initialize eventStore
+    navigateToEvent: (eventId: string) => {
+        const { events } = get()
+        const event = events.find(e => e.id === eventId)
+        if (event) {
+            useEventStore.getState().initializeFromEvent(event)
         }
     },
 }))

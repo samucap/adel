@@ -6,7 +6,7 @@
 
 @theme inline {
   --font-sans: 'Ubuntu', 'Ubuntu Fallback';
-  --font-mono: var(--font-mono);
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'Monaco', 'Cascadia Code', monospace;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -104,56 +104,51 @@
 }
 
 .dark {
-  --background: #0D1B18;
-  --foreground: #E8EDEB;
-  --card: #132925;
-  --card-foreground: #E8EDEB;
-  --popover: #132925;
-  --popover-foreground: #E8EDEB;
-  --primary: #DCF763;
-  --primary-foreground: #16302B;
-  --secondary: #1A332E;
-  --secondary-foreground: #E8EDEB;
-  --muted: #1A332E;
-  --muted-foreground: #7A9A91;
-  --accent: #1E3B35;
-  --accent-foreground: #E8EDEB;
-  --destructive: #ED254E;
-  --destructive-foreground: #FFFFFF;
-  --border: #243F39;
-  --input: #243F39;
-  --ring: #DCF763;
+  --background: #0a0a0a; /* Pure black background for terminal feel */
+  --foreground: #e0e0e0; /* Light gray text */
+  --card: #1a1a1a; /* Dark gray cards */
+  --card-foreground: #e0e0e0;
+  --popover: #1a1a1a;
+  --popover-foreground: #e0e0e0;
+  --primary: #39FF14; /* Acid green - main positive color */
+  --primary-foreground: #0a0a0a;
+  --secondary: #00F0FF; /* Electric cyan - secondary/live updates */
+  --secondary-foreground: #0a0a0a;
+  --muted: #2a2a2a; /* Muted dark gray */
+  --muted-foreground: #888888; /* Medium gray text */
+  --accent: #333333; /* Slightly lighter dark */
+  --accent-foreground: #e0e0e0;
+  --destructive: #FF4D00; /* Neon orange - negative/alerts */
+  --destructive-foreground: #ffffff;
+  --border: #333333; /* Dark border */
+  --input: #2a2a2a; /* Dark input background */
+  --ring: #39FF14; /* Acid green ring */
 
-  /* Chart colors - V0 theme palette */
-  --chart-1: #DCF763;
-  /* Lime/Yellow - primary accent */
-  --chart-2: #70D6FF;
-  /* Cyan - secondary accent */
-  --chart-3: #ED254E;
-  /* Red/Pink - destructive/alerts */
-  --chart-4: #A0ACAD;
-  /* Gray - neutral */
-  --chart-5: #4AE0A5;
-  /* Teal - success */
+  /* Polymarket-specific chart colors */
+  --chart-1: #39FF14; /* Acid green - YES/buy */
+  --chart-2: #00F0FF; /* Electric cyan - live updates */
+  --chart-3: #FF4D00; /* Neon orange - NO/sell */
+  --chart-4: #555555; /* Neutral gray */
+  --chart-5: #39FF14; /* Acid green - success */
 
   /* Chart tooltip styling */
-  --tooltip-bg: #132925;
-  --tooltip-border: #243F39;
-  --tooltip-text: #E8EDEB;
+  --tooltip-bg: #1a1a1a;
+  --tooltip-border: #39FF14;
+  --tooltip-text: #e0e0e0;
 
-  /* Chart grid/axis colors */
-  --chart-grid: #243F39;
-  --chart-axis: #7A9A91;
-  --chart-cursor: #1E3B35;
+  /* Chart grid/axis colors - neon theme */
+  --chart-grid: #39FF14;
+  --chart-axis: #888888;
+  --chart-cursor: #00F0FF;
 
-  --sidebar: #0D1B18;
-  --sidebar-foreground: #E8EDEB;
-  --sidebar-primary: #DCF763;
-  --sidebar-primary-foreground: #16302B;
-  --sidebar-accent: #1E3B35;
-  --sidebar-accent-foreground: #E8EDEB;
-  --sidebar-border: #243F39;
-  --sidebar-ring: #DCF763;
+  --sidebar: #0a0a0a;
+  --sidebar-foreground: #e0e0e0;
+  --sidebar-primary: #39FF14;
+  --sidebar-primary-foreground: #0a0a0a;
+  --sidebar-accent: #1a1a1a;
+  --sidebar-accent-foreground: #e0e0e0;
+  --sidebar-border: #333333;
+  --sidebar-ring: #39FF14;
 }
 
 @layer base {
@@ -173,5 +168,96 @@
   }
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
+  }
+
+  /* Neon glow effects */
+  .neon-glow {
+    box-shadow:
+      0 0 5px currentColor,
+      0 0 10px currentColor,
+      0 0 15px currentColor;
+  }
+
+  .neon-glow-acid {
+    color: #39FF14;
+    text-shadow:
+      0 0 5px #39FF14,
+      0 0 10px #39FF14,
+      0 0 15px #39FF14;
+  }
+
+  .neon-glow-cyan {
+    color: #00F0FF;
+    text-shadow:
+      0 0 5px #00F0FF,
+      0 0 10px #00F0FF,
+      0 0 15px #00F0FF;
+  }
+
+  .neon-glow-orange {
+    color: #FF4D00;
+    text-shadow:
+      0 0 5px #FF4D00,
+      0 0 10px #FF4D00,
+      0 0 15px #FF4D00;
+  }
+
+  /* Scanline effect for live sections */
+  .scanlines {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .scanlines::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+      transparent 50%,
+      rgba(0, 240, 255, 0.03) 50%,
+      rgba(0, 240, 255, 0.03) 51%,
+      transparent 51%
+    );
+    background-size: 100% 4px;
+    pointer-events: none;
+    animation: scan 0.1s linear infinite;
+  }
+
+  @keyframes scan {
+    0% { transform: translateY(-100%); }
+    100% { transform: translateY(100vh); }
+  }
+
+  /* Monospace font for numbers */
+  .font-mono-numbers {
+    font-family: 'JetBrains Mono', 'Fira Code', 'Monaco', 'Cascadia Code', monospace;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Terminal-style selection */
+  ::selection {
+    background: rgba(57, 255, 20, 0.3);
+    color: #0a0a0a;
+  }
+
+  /* Custom scrollbar for neon theme */
+  .neon-scrollbar::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .neon-scrollbar::-webkit-scrollbar-track {
+    background: #1a1a1a;
+  }
+
+  .neon-scrollbar::-webkit-scrollbar-thumb {
+    background: #39FF14;
+    border-radius: 4px;
+  }
+
+  .neon-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #00F0FF;
   }
 }

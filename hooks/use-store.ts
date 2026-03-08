@@ -1,5 +1,6 @@
 import { create } from 'zustand'
-import { Market, Event, mockMarkets, mockEvents, userProfileValues } from '@/lib/mock-data'
+import { Market, Event } from '@/types/dashboard'
+import { mockMarkets, mockEvents, userProfileValues } from '@/lib/mock-data'
 
 interface AppState {
     currentEventId: string | null
@@ -17,8 +18,8 @@ export const useStore = create<AppState>((set) => ({
     currentEventId: null,
     currentMarketId: null,
     user: userProfileValues,
-    markets: mockMarkets,
-    events: mockEvents,
+    markets: [],
+    events: [],
 
     selectEvent: (id) => set({ currentEventId: id }),
     selectMarket: (id) => set({ currentMarketId: id }),

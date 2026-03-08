@@ -1,6 +1,6 @@
 "use client"
 
-import { useAppStore } from "@/lib/store";
+import { useEventStore } from "@/stores/eventStore";
 import { cn } from "@/lib/utils";
 import { ReactNode } from "react";
 
@@ -15,7 +15,7 @@ export function DashboardPanelWrapper({
     defaultComponent,
     className,
 }: DashboardPanelWrapperProps) {
-    const { currMkt, currEv } = useAppStore();
+    const { currMkt, currEv } = useEventStore();
 
     // Logic to switch components based on state could go here.
     // For now, we simply render the default component but wrapping it

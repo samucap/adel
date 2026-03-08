@@ -1,5 +1,22 @@
 
 
+// --- Polymarket API Types ---
+
+export interface PricePoint {
+    t: number; // timestamp
+    p: number; // price
+}
+
+export interface OrderbookLevel {
+    price: string;
+    size: string;
+}
+
+export interface Orderbook {
+    bids: OrderbookLevel[];
+    asks: OrderbookLevel[];
+}
+
 // --- Clean Event Data Contract ---
 
 export type LayoutType = 'POLL' | 'SPORTS' | 'SPORTS_GROUP' | 'BINARY';
@@ -45,6 +62,7 @@ export interface CleanEvent {
     volume24hrClob: number;
     liquidityClob: number;
     liquidity: number;
+    startDate: string;
 
     // The backend puts the correct data here based on layout.
     // You just render what exists.

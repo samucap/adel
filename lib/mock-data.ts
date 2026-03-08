@@ -1,322 +1,518 @@
-import { type ClassValue, clsx } from "clsx"
-import { twMerge } from "tailwind-merge"
-
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
-}
-
-export type MarketType = "moneyline" | "spread" | "over_under" | "standard";
-
-export type Market = {
-  id: string
-  title: string
-  volume: number
-  liquidity: number
-  price: number
-  change24h: number
-  category: string
-  isHot: boolean
-  isWhaleActive: boolean
-  // New fields
-  marketType?: MarketType
-  group?: string // e.g., "Winner", "MVP"
-}
-
-export type Event = {
-  id: string
-  title: string
-  description: string
-  markets: Market[]
-  endDate: string
-  volume: number
-  // New fields
-  gameId?: string
-  gameStartTime?: string
-  league?: string
-  isSports?: boolean
-}
-
-// --- New Types for Quant Dashboard ---
-
-export type TreemapNode = {
-  name: string
-  size: number // Open Interest or Volume
-  drift: number // Implied probability drift (positive = green, negative = red)
-  liquidityRatio: number
-  volatilityEdge: number
-  children?: TreemapNode[]
-  color?: string
-  image?: string
-}
-
-export type TrendingMarket = {
-  id: string
-  title: string
-  category: string
-  volume24h: number
-  volumeGrowth24h: number // Percentage
-  probability: number
-  probabilityDrift: number // 24h change
-  sparklineData: number[] // Last 24h hourly points
-  resolutionDate: string
-}
-
-export type ArbitrageOpp = {
-  id: string
-  event: string
-  platforms: {
-    polymarket: number
-    kalshi: number
-    betfair: number
-  }
-  spreadIndex: number // Max difference
-  zScore: number
-  liquidity: number
-  isArb: boolean
-}
-
-export type ScatterPoint = {
-  id: string
-  name: string
-  category: string
-  edge: number // Volatility adjusted edge (X)
-  yield: number // Yield equivalent return (Y)
-  size: number // Open Interest
-  accuracy: number // Resolution accuracy score
-}
-
-export type NetworkNode = {
-  id: string
-  group: number // Cluster ID
-  val: number // Size
-  label: string
-}
-
-export type NetworkLink = {
-  source: string
-  target: string
-  value: number // Correlation strength (-1 to 1)
-}
-
-export type LiquidityLevel = {
-  price: number
-  volume: number
-  type: 'bid' | 'ask'
-  slippageRisk: 'low' | 'medium' | 'high'
-}
-
-// --- Mock Data Generators ---
-
-export const mockDashboardStats = {
-  tvl: 45200000, // $45.2M
-  volume24h: 12500000, // $12.5M
-  volume7d: 85400000, // $85.4M
-  fees24h: 250000, // $250k
-  activeTraders: 8500,
-  openInterest: 32000000, // $32M
-  activeMarkets: 1240,
-  topGainer: "+145%",
-}
-
-export const mockMarkets: Market[] = [
-  { id: "m1", title: "Trump vs Biden 2024", volume: 15400000, liquidity: 5000000, price: 0.52, change24h: 2.5, category: "Politics", isHot: true, isWhaleActive: true, marketType: "standard" },
-  { id: "m2", title: "Fed Rate Cut in March", volume: 8200000, liquidity: 2100000, price: 0.12, change24h: -5.4, category: "Economics", isHot: true, isWhaleActive: false, marketType: "standard" },
-  { id: "m3", title: "Bitcoin > 100k by Q2", volume: 4100000, liquidity: 1200000, price: 0.33, change24h: 8.2, category: "Crypto", isHot: false, isWhaleActive: true, marketType: "standard" },
-  { id: "m4", title: "SpaceX Starship Launch Success", volume: 900000, liquidity: 300000, price: 0.88, change24h: 1.1, category: "Science", isHot: false, isWhaleActive: false, marketType: "standard" },
-  { id: "m5", title: "Chiefs vs 49ers (Winner)", volume: 6500000, liquidity: 1800000, price: 0.45, change24h: -1.2, category: "Sports", isHot: true, isWhaleActive: true, marketType: "moneyline", group: "Winner" },
-  { id: "m6", title: "Taylor Swift Engagement 2024", volume: 3200000, liquidity: 900000, price: 0.15, change24h: 12.5, category: "Pop Culture", isHot: true, isWhaleActive: false, marketType: "standard" },
-  { id: "m7", title: "GPT-5 Release Date", volume: 1200000, liquidity: 400000, price: 0.72, change24h: 0.5, category: "Tech", isHot: false, isWhaleActive: true, marketType: "standard" },
-  { id: "m8", title: "Oil Price > $100", volume: 2200000, liquidity: 800000, price: 0.28, change24h: -3.1, category: "Economics", isHot: false, isWhaleActive: false, marketType: "standard" },
-]
-
-export const mockEvents: Event[] = [
-  {
-    id: "e1",
-    title: "US Presidential Election 2024",
-    description: "Who will win the 2024 US Presidential Election? Analyze polls, funding, and momentum.",
-    markets: [mockMarkets[0]],
-    endDate: "2024-11-05",
-    volume: 24500000,
-    isSports: false,
-    league: "N/A"
-  },
-  {
-    id: "e2",
-    title: "Super Bowl LVIII",
-    description: "Kansas City Chiefs vs San Francisco 49ers. Super Bowl LVIII.",
-    markets: [mockMarkets[4]],
-    endDate: "2024-02-11",
-    volume: 8500000,
-    isSports: true,
-    league: "NFL",
-    gameId: "sb-lviii",
-    gameStartTime: "2024-02-11T23:30:00Z"
-  }
-]
-
-// --- Enhanced Mock Data for Visualizations ---
-
-export const mockTreemapData: TreemapNode[] = [
-  {
-    name: "Politics",
-    size: 45000000,
-    drift: 0,
-    liquidityRatio: 0,
-    volatilityEdge: 0,
-    color: "#3b82f6", // blue-500
-    children: [
-      { name: "US Pres", size: 25000000, drift: 2.5, liquidityRatio: 0.8, volatilityEdge: 1.2, image: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5c/Great_Seal_of_the_United_States_%28obverse%29.svg/2048px-Great_Seal_of_the_United_States_%28obverse%29.svg.png" },
-      { name: "Congressional", size: 12000000, drift: -1.2, liquidityRatio: 0.6, volatilityEdge: 0.8, image: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4b/Seal_of_the_United_States_Congress.svg/1200px-Seal_of_the_United_States_Congress.svg.png" },
-      { name: "Global", size: 8000000, drift: 0.5, liquidityRatio: 0.4, volatilityEdge: 0.9, image: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ef/International_Flag_of_Planet_Earth.svg/1200px-International_Flag_of_Planet_Earth.svg.png" },
-    ],
-  },
-  {
-    name: "Economics",
-    size: 28000000,
-    drift: 0,
-    liquidityRatio: 0,
-    volatilityEdge: 0,
-    color: "#10b981", // emerald-500
-    children: [
-      { name: "Fed Rates", size: 15000000, drift: -4.5, liquidityRatio: 0.9, volatilityEdge: 1.5, image: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/Seal_of_the_United_States_Federal_Reserve_System.svg/1200px-Seal_of_the_United_States_Federal_Reserve_System.svg.png" },
-      { name: "Recession", size: 8000000, drift: 1.1, liquidityRatio: 0.5, volatilityEdge: 1.1, image: "https://cdn-icons-png.flaticon.com/512/2454/2454282.png" },
-      { name: "Jobs", size: 5000000, drift: -0.2, liquidityRatio: 0.3, volatilityEdge: 0.6, image: "https://cdn-icons-png.flaticon.com/512/3281/3281289.png" },
-    ],
-  },
-  {
-    name: "Crypto",
-    size: 22000000,
-    drift: 0,
-    liquidityRatio: 0,
-    volatilityEdge: 0,
-    color: "#f59e0b", // amber-500
-    children: [
-      { name: "Bitcoin", size: 12000000, drift: 5.2, liquidityRatio: 0.95, volatilityEdge: 1.8, image: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Bitcoin.svg/1200px-Bitcoin.svg.png" },
-      { name: "Ethereum", size: 6000000, drift: 3.8, liquidityRatio: 0.85, volatilityEdge: 1.6, image: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6f/Ethereum-icon-purple.svg/1200px-Ethereum-icon-purple.svg.png" },
-      { name: "Solana", size: 4000000, drift: 8.5, liquidityRatio: 0.7, volatilityEdge: 2.2, image: "https://upload.wikimedia.org/wikipedia/en/b/b9/Solana_logo.png" },
-    ],
-  },
-  {
-    name: "Sports",
-    size: 18000000,
-    drift: 0,
-    liquidityRatio: 0,
-    volatilityEdge: 0,
-    color: "#f43f5e", // rose-500
-    children: [
-      { name: "NFL", size: 10000000, drift: -0.5, liquidityRatio: 0.9, volatilityEdge: 0.5, image: "https://upload.wikimedia.org/wikipedia/en/thumb/a/a2/National_Football_League_logo.svg/1200px-National_Football_League_logo.svg.png" },
-      { name: "NBA", size: 5000000, drift: 1.2, liquidityRatio: 0.8, volatilityEdge: 0.7, image: "https://upload.wikimedia.org/wikipedia/en/thumb/0/03/National_Basketball_Association_logo.svg/1200px-National_Basketball_Association_logo.svg.png" },
-      { name: "Soccer", size: 3000000, drift: 0.1, liquidityRatio: 0.6, volatilityEdge: 0.4, image: "https://upload.wikimedia.org/wikipedia/en/thumb/e/e4/FIFA_World_Cup.svg/1200px-FIFA_World_Cup.svg.png" },
-    ],
-  },
-];
-
-export const mockTrendingMarkets: TrendingMarket[] = [
-  { id: "t1", title: "Bitcoin > 100k Q2", category: "Crypto", volume24h: 1200000, volumeGrowth24h: 145, probability: 0.32, probabilityDrift: 5.2, sparklineData: [25, 26, 26, 27, 28, 29, 29, 30, 31, 31, 32, 32], resolutionDate: "Jun 2024" },
-  { id: "t2", title: "Fed Interest Rate Cut", category: "Eco", volume24h: 850000, volumeGrowth24h: 82, probability: 0.15, probabilityDrift: -4.1, sparklineData: [20, 19, 19, 18, 17, 16, 16, 15, 15, 14, 15, 15], resolutionDate: "Mar 2024" },
-  { id: "t3", title: "Super Bowl Winner", category: "Sports", volume24h: 2100000, volumeGrowth24h: 65, probability: 0.55, probabilityDrift: 1.2, sparklineData: [52, 53, 53, 54, 54, 55, 54, 55, 55, 56, 55, 55], resolutionDate: "Feb 2024" },
-  { id: "t4", title: "GTA VI Release Date", category: "Gaming", volume24h: 450000, volumeGrowth24h: 42, probability: 0.68, probabilityDrift: 0.5, sparklineData: [67, 67, 68, 68, 68, 68, 69, 68, 68, 68, 68, 68], resolutionDate: "Dec 2025" },
-  { id: "t5", title: "AI Regulation passed", category: "Pol", volume24h: 320000, volumeGrowth24h: 38, probability: 0.42, probabilityDrift: 2.1, sparklineData: [38, 39, 39, 40, 40, 41, 41, 42, 42, 42, 42, 42], resolutionDate: "Dec 2024" },
-  { id: "t6", title: "SpaceX Launch Success", category: "Sci", volume24h: 280000, volumeGrowth24h: 24, probability: 0.88, probabilityDrift: 1.5, sparklineData: [85, 86, 86, 87, 87, 87, 88, 88, 88, 88, 88, 88], resolutionDate: "Apr 2024" },
-  { id: "t7", title: "S&P 500 ATH", category: "Eco", volume24h: 650000, volumeGrowth24h: 18, probability: 0.72, probabilityDrift: 0.8, sparklineData: [70, 71, 71, 72, 72, 72, 72, 72, 73, 72, 72, 72], resolutionDate: "Dec 2024" },
-  { id: "t8", title: "Oppenheimer Best Picture", category: "Ent", volume24h: 410000, volumeGrowth24h: 12, probability: 0.91, probabilityDrift: 0.2, sparklineData: [90, 90, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91], resolutionDate: "Mar 2024" },
-  { id: "t9", title: "Temp Anomaly > 1.5C", category: "Sci", volume24h: 150000, volumeGrowth24h: 8, probability: 0.64, probabilityDrift: 0.4, sparklineData: [63, 63, 64, 64, 64, 64, 64, 64, 65, 64, 64, 64], resolutionDate: "Dec 2024" },
-  { id: "t10", title: "Eurovision Winner", category: "Ent", volume24h: 220000, volumeGrowth24h: 156, probability: 0.22, probabilityDrift: 8.5, sparklineData: [12, 14, 15, 18, 20, 21, 23, 24, 22, 22, 22, 22], resolutionDate: "May 2024" },
-];
-
-export const mockArbitrageData: ArbitrageOpp[] = [
-  { id: "a1", event: "US Election Winner", platforms: { polymarket: 0.52, kalshi: 0.55, betfair: 0.51 }, spreadIndex: 0.04, zScore: 2.1, liquidity: 0.9, isArb: true },
-  { id: "a2", event: "Fed Rate Cut Mar", platforms: { polymarket: 0.12, kalshi: 0.18, betfair: 0.14 }, spreadIndex: 0.06, zScore: 3.4, liquidity: 0.7, isArb: true },
-  { id: "a3", event: "Bitcoin > 100k", platforms: { polymarket: 0.33, kalshi: 0.31, betfair: 0.33 }, spreadIndex: 0.02, zScore: 0.8, liquidity: 0.85, isArb: false },
-  { id: "a4", event: "Super Bowl Winner", platforms: { polymarket: 0.45, kalshi: 0.46, betfair: 0.44 }, spreadIndex: 0.02, zScore: 0.5, liquidity: 0.95, isArb: false },
-  { id: "a5", event: "Oscars Best Picture", platforms: { polymarket: 0.91, kalshi: 0.88, betfair: 0.89 }, spreadIndex: 0.03, zScore: 1.8, liquidity: 0.6, isArb: false },
-];
-
-export const mockScatterData: ScatterPoint[] = [
-  { id: "s1", name: "US Election", category: "Politics", edge: 2.4, yield: 12.5, size: 45, accuracy: 85 },
-  { id: "s2", name: "Bitcoin Q2", category: "Crypto", edge: 1.8, yield: 24.2, size: 28, accuracy: 72 },
-  { id: "s3", name: "Fed Rates", category: "Economics", edge: -0.5, yield: 4.5, size: 35, accuracy: 92 },
-  { id: "s4", name: "Super Bowl", category: "Sports", edge: 1.2, yield: 8.4, size: 32, accuracy: 88 },
-  { id: "s5", name: "GTA VI", category: "Entertainment", edge: 0.8, yield: 15.1, size: 18, accuracy: 65 },
-  { id: "s6", name: "SpaceX", category: "Science", edge: 0.4, yield: 6.2, size: 12, accuracy: 78 },
-  { id: "s7", name: "Inflation", category: "Economics", edge: 1.5, yield: 9.8, size: 25, accuracy: 90 },
-  { id: "s8", name: "Ethereum ETF", category: "Crypto", edge: 3.1, yield: 18.5, size: 22, accuracy: 75 },
-  { id: "s9", name: "Oil Prices", category: "Economics", edge: -1.2, yield: 2.1, size: 40, accuracy: 94 },
-  { id: "s10", name: "AI Regs", category: "Politics", edge: 0.9, yield: 14.2, size: 15, accuracy: 60 },
-];
-
-export const mockCorrelationData: { nodes: NetworkNode[], links: NetworkLink[] } = {
-  nodes: [
-    { id: "Bitcoin", group: 1, val: 20, label: "BTC > 100k" },
-    { id: "Ethereum", group: 1, val: 15, label: "ETH > 5k" },
-    { id: "Solana", group: 1, val: 12, label: "SOL > 200" },
-    { id: "FedRates", group: 2, val: 18, label: "Fed Cuts" },
-    { id: "Inflation", group: 2, val: 16, label: "CPI > 3%" },
-    { id: "StockMarket", group: 2, val: 15, label: "S&P ATH" },
-    { id: "USElection", group: 3, val: 25, label: "Trump Win" },
-    { id: "Regulations", group: 3, val: 10, label: "Crypto Regs" },
-  ],
-  links: [
-    { source: "Bitcoin", target: "Ethereum", value: 0.85 },
-    { source: "Bitcoin", target: "Solana", value: 0.72 },
-    { source: "FedRates", target: "Inflation", value: -0.65 },
-    { source: "FedRates", target: "StockMarket", value: 0.78 },
-    { source: "FedRates", target: "Bitcoin", value: 0.45 },
-    { source: "USElection", target: "Regulations", value: 0.60 },
-    { source: "USElection", target: "StockMarket", value: 0.35 },
-    { source: "Bitcoin", target: "Regulations", value: -0.40 },
-  ]
+// --- Mock Data Generators (Deterministic) ---
+// Simple seeded random to ensure charts look stable for the same market
+const seededRandom = (seed: number) => {
+    const x = Math.sin(seed++) * 10000;
+    return x - Math.floor(x);
 };
 
-export const mockLiquidityDepth: LiquidityLevel[] = [
-  { price: 0.1, volume: 50000, type: 'bid', slippageRisk: 'low' },
-  { price: 0.2, volume: 120000, type: 'bid', slippageRisk: 'low' },
-  { price: 0.3, volume: 80000, type: 'bid', slippageRisk: 'medium' },
-  { price: 0.4, volume: 45000, type: 'bid', slippageRisk: 'high' },
-  { price: 0.5, volume: 20000, type: 'ask', slippageRisk: 'high' },
-  { price: 0.6, volume: 60000, type: 'ask', slippageRisk: 'medium' },
-  { price: 0.7, volume: 150000, type: 'ask', slippageRisk: 'low' },
-  { price: 0.8, volume: 80000, type: 'ask', slippageRisk: 'low' },
+const getStepFromInterval = (interval: string) => {
+    switch (interval) {
+        case '5m': return 300;
+        case '15m': return 900;
+        case '1H': case '1h': return 3600;
+        case '4H': case '4h': return 14400;
+        case '1D': case '1d': return 86400;
+        default: return 900;
+    }
+};
+
+export const generateMockCandles = (marketId: string, count = 100, outcomeIndex = 0, currentPrice?: number, interval: string = '15m') => {
+    // Generate a numeric seed from marketId string + outcomeIndex
+    const seed = marketId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) + (outcomeIndex * 999);
+    const step = getStepFromInterval(interval);
+
+    // Initial generation (normalized around 0.5 or arbitrary base)
+    let price = 0.50 + (seededRandom(seed) * 0.40);
+    if (outcomeIndex > 0) price = price * 0.5;
+
+    const candles = [];
+    const now = Math.floor(Date.now() / 1000);
+    const alignedNow = now - (now % step);
+
+    for (let i = 0; i < count; i++) {
+        const time = alignedNow - (count - i) * step;
+        const candleSeed = seed + time; // Deterministic per time slice
+        const change = (seededRandom(candleSeed) - 0.5) * 0.05;
+
+        const open = price;
+        const close = price + change;
+        const high = Math.max(open, close) + (seededRandom(candleSeed + 1) * 0.02);
+        const low = Math.min(open, close) - (seededRandom(candleSeed + 2) * 0.02);
+
+        candles.push({
+            time, // raw values first
+            open, high, low, close
+        });
+        price = close;
+    }
+
+    // Alignment Logic
+    if (currentPrice !== undefined && candles.length > 0) {
+        const lastClose = candles[candles.length - 1].close;
+        const offset = currentPrice - lastClose;
+
+        return candles.map(c => ({
+            ...c,
+            open: Math.max(0.01, c.open + offset),
+            high: Math.max(0.01, c.high + offset),
+            low: Math.max(0.01, c.low + offset),
+            close: Math.max(0.01, c.close + offset)
+        }));
+    }
+
+    return candles.map(c => ({
+        ...c,
+        open: Math.max(0.01, c.open),
+        high: Math.max(0.01, c.high),
+        low: Math.max(0.01, c.low),
+        close: Math.max(0.01, c.close)
+    }));
+};
+
+export const generateMockOrderBook = (marketId: string, currentPrice?: number) => {
+    const seed = marketId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const basePrice = currentPrice || (0.50 + (seededRandom(seed) * 0.40));
+
+    return {
+        bids: Array.from({ length: 15 }).map((_, i) => ({
+            price: Math.max(0.01, basePrice - 0.01 - (i * 0.01)),
+            size: 1000 + seededRandom(seed + i) * 5000
+        })),
+        asks: Array.from({ length: 15 }).map((_, i) => ({
+            price: Math.min(0.99, basePrice + 0.01 + (i * 0.01)),
+            size: 1000 + seededRandom(seed + i + 100) * 5000
+        }))
+    };
+};
+
+export const generateMockTrades = (marketId: string, count = 20, currentPrice?: number) => {
+    const seed = marketId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const trades = [];
+    const now = Date.now();
+    const basePrice = currentPrice || 0.50;
+
+    for (let i = 0; i < count; i++) {
+        const time = now - i * (1000 * 60 * 5 + seededRandom(seed + i) * 1000 * 60);
+        const side = seededRandom(seed + i + 1) > 0.5 ? 'YES' : 'NO';
+        const type = seededRandom(seed + i + 2) > 0.5 ? 'BUY' : 'SELL';
+        // Random walks around basePrice
+        const variation = (seededRandom(seed + i + 3) - 0.5) * 0.10;
+        const price = Math.max(0.01, basePrice + variation);
+        const size = 100 + seededRandom(seed + i + 4) * 5000;
+        trades.push({ time, side, type, price, size, id: `trade-${i}` });
+    }
+    return trades;
+};
+
+// Mock dashboard stats
+export const mockDashboardStats = {
+    tvl: 450000000, // $450M
+    volume24h: 125000000, // $125M
+    openInterest: 89000000, // $89M
+    activeTraders: 15420,
+    fees24h: 125000, // $125k
+    activeMarkets: 2340
+};
+
+// Mock activities for dashboard
+export const mockActivities = [
+    {
+        id: "1",
+        user: "0x742d...3f9a",
+        action: "buy" as const,
+        market: "US Election 2024",
+        outcome: "Trump",
+        amount: "$12,500",
+        odds: 2.45,
+        time: "2 minutes ago"
+    },
+    {
+        id: "2",
+        user: "0x8b2c...1d4e",
+        action: "sell" as const,
+        market: "Bitcoin $100k",
+        outcome: "Yes",
+        amount: "$8,200",
+        odds: 1.85,
+        time: "5 minutes ago"
+    },
+    {
+        id: "3",
+        user: "0xa3f1...9b7c",
+        action: "buy" as const,
+        market: "Chiefs vs 49ers",
+        outcome: "Chiefs",
+        amount: "$5,600",
+        odds: 1.92,
+        time: "8 minutes ago"
+    },
+    {
+        id: "4",
+        user: "0x4e5f...2a8b",
+        action: "buy" as const,
+        market: "Fed Rate Cut",
+        outcome: "No",
+        amount: "$15,000",
+        odds: 2.15,
+        time: "12 minutes ago"
+    },
+    {
+        id: "5",
+        user: "0x1c2d...7e6f",
+        action: "sell" as const,
+        market: "Euro 2024",
+        outcome: "Draw",
+        amount: "$3,400",
+        odds: 3.20,
+        time: "15 minutes ago"
+    }
 ];
 
+// Mock arbitrage data for dashboard
+export const mockArbitrageData = [
+    {
+        id: "arb-1",
+        event: "US Presidential Election 2024",
+        isArb: true,
+        zScore: 2.3,
+        platforms: {
+            polymarket: 0.48,
+            kalshi: 0.52,
+            betfair: 0.46
+        },
+        liquidity: 0.85
+    },
+    {
+        id: "arb-2",
+        event: "Bitcoin $100k by EOY",
+        isArb: false,
+        zScore: 0.8,
+        platforms: {
+            polymarket: 0.35,
+            kalshi: 0.37,
+            betfair: 0.34
+        },
+        liquidity: 0.72
+    },
+    {
+        id: "arb-3",
+        event: "Chiefs vs 49ers Super Bowl",
+        isArb: true,
+        zScore: 1.9,
+        platforms: {
+            polymarket: 0.58,
+            kalshi: 0.54,
+            betfair: 0.61
+        },
+        liquidity: 0.91
+    },
+    {
+        id: "arb-4",
+        event: "Fed Rate Cut Q1 2024",
+        isArb: false,
+        zScore: 1.1,
+        platforms: {
+            polymarket: 0.42,
+            kalshi: 0.45,
+            betfair: 0.41
+        },
+        liquidity: 0.68
+    },
+    {
+        id: "arb-5",
+        event: "Euro 2024 Winner",
+        isArb: true,
+        zScore: 2.7,
+        platforms: {
+            polymarket: 0.15,
+            kalshi: 0.18,
+            betfair: 0.12
+        },
+        liquidity: 0.76
+    }
+];
+
+// Mock correlation data for dashboard
+export const mockCorrelationData = {
+    links: [
+        { source: "Bitcoin", target: "Ethereum", value: 0.85 },
+        { source: "Bitcoin", target: "Solana", value: 0.72 },
+        { source: "Ethereum", target: "Solana", value: 0.68 },
+        { source: "Bitcoin", target: "StockMarket", value: 0.45 },
+        { source: "StockMarket", target: "FedRates", value: -0.35 },
+        { source: "FedRates", target: "Inflation", value: 0.62 },
+        { source: "Inflation", target: "Bitcoin", value: -0.28 },
+        { source: "USElection", target: "StockMarket", value: 0.52 },
+        { source: "USElection", target: "FedRates", value: 0.41 },
+        { source: "Regulations", target: "Bitcoin", value: -0.38 },
+        { source: "Regulations", target: "Ethereum", value: -0.32 },
+        { source: "Solana", target: "Regulations", value: -0.25 }
+    ]
+};
+
+// Mock liquidity depth for dashboard
+export const mockLiquidityDepth = [
+    { type: 'bid', price: 0.45, volume: 25000, slippageRisk: 'low' },
+    { type: 'bid', price: 0.44, volume: 18000, slippageRisk: 'low' },
+    { type: 'bid', price: 0.43, volume: 32000, slippageRisk: 'medium' },
+    { type: 'bid', price: 0.42, volume: 15000, slippageRisk: 'high' },
+    { type: 'bid', price: 0.41, volume: 28000, slippageRisk: 'high' },
+    { type: 'ask', price: 0.46, volume: 22000, slippageRisk: 'low' },
+    { type: 'ask', price: 0.47, volume: 19000, slippageRisk: 'medium' },
+    { type: 'ask', price: 0.48, volume: 35000, slippageRisk: 'high' },
+    { type: 'ask', price: 0.49, volume: 12000, slippageRisk: 'high' },
+    { type: 'ask', price: 0.50, volume: 41000, slippageRisk: 'high' }
+];
+
+// Mock scatter data for dashboard
+export const mockScatterData = [
+    { x: 0.45, y: 0.12, category: 'Crypto', name: 'BTC Price' },
+    { x: 0.62, y: 0.08, category: 'Crypto', name: 'ETH Price' },
+    { x: 0.38, y: 0.15, category: 'Politics', name: 'Election Odds' },
+    { x: 0.71, y: 0.06, category: 'Sports', name: 'Super Bowl' },
+    { x: 0.29, y: 0.18, category: 'Economics', name: 'Fed Rates' },
+    { x: 0.55, y: 0.09, category: 'Crypto', name: 'SOL Price' },
+    { x: 0.33, y: 0.14, category: 'Politics', name: 'Midterms' },
+    { x: 0.68, y: 0.07, category: 'Sports', name: 'World Cup' },
+    { x: 0.42, y: 0.11, category: 'Economics', name: 'Inflation' },
+    { x: 0.79, y: 0.04, category: 'Crypto', name: 'ADA Price' }
+];
+
+// Type definition for treemap data
+export interface TreemapNode {
+    name: string;
+    color: string;
+    children?: Array<{
+        name: string;
+        size: number;
+        drift: number;
+        liquidityRatio: number;
+        volatilityEdge: number;
+        image?: string;
+    }>;
+}
+
+// Mock treemap data for dashboard
+export const mockTreemapData: TreemapNode[] = [
+    {
+        name: "Crypto",
+        color: "#10b981",
+        children: [
+            { name: "Bitcoin", size: 45000, drift: 0.05, liquidityRatio: 0.85, volatilityEdge: 0.12, image: "₿" },
+            { name: "Ethereum", size: 28000, drift: 0.08, liquidityRatio: 0.72, volatilityEdge: 0.15, image: "Ξ" },
+            { name: "Solana", size: 12000, drift: -0.03, liquidityRatio: 0.68, volatilityEdge: 0.18, image: "◎" }
+        ]
+    },
+    {
+        name: "Politics",
+        color: "#ef4444",
+        children: [
+            { name: "US Election", size: 32000, drift: 0.12, liquidityRatio: 0.91, volatilityEdge: 0.08, image: "🇺🇸" },
+            { name: "Midterms", size: 18000, drift: 0.06, liquidityRatio: 0.75, volatilityEdge: 0.11, image: "🏛️" }
+        ]
+    },
+    {
+        name: "Sports",
+        color: "#3b82f6",
+        children: [
+            { name: "Super Bowl", size: 25000, drift: 0.09, liquidityRatio: 0.88, volatilityEdge: 0.07, image: "🏈" },
+            { name: "World Cup", size: 22000, drift: 0.04, liquidityRatio: 0.82, volatilityEdge: 0.09, image: "⚽" }
+        ]
+    }
+];
+
+// Mock trending markets for dashboard
+export const mockTrendingMarkets = [
+    {
+        id: "market-1",
+        title: "Bitcoin $100k by EOY",
+        category: "Crypto",
+        resolutionDate: "Dec 31, 2024",
+        probability: 0.45,
+        probabilityDrift: 2.3,
+        volumeGrowth24h: 145.6,
+        currentVolume: "$2.5M",
+        sparklineData: [0.42, 0.44, 0.43, 0.46, 0.45, 0.47, 0.45]
+    },
+    {
+        id: "market-2",
+        title: "Trump wins 2024 Election",
+        category: "Politics",
+        resolutionDate: "Nov 5, 2024",
+        probability: 0.52,
+        probabilityDrift: -1.8,
+        volumeGrowth24h: 89.2,
+        currentVolume: "$8.1M",
+        sparklineData: [0.54, 0.53, 0.52, 0.51, 0.52, 0.53, 0.52]
+    },
+    {
+        id: "market-3",
+        title: "Chiefs win Super Bowl",
+        category: "Sports",
+        resolutionDate: "Feb 9, 2025",
+        probability: 0.58,
+        probabilityDrift: 3.1,
+        volumeGrowth24h: 67.8,
+        currentVolume: "$3.2M",
+        sparklineData: [0.55, 0.57, 0.56, 0.58, 0.57, 0.59, 0.58]
+    },
+    {
+        id: "market-4",
+        title: "Fed cuts rates in Q1",
+        category: "Economics",
+        resolutionDate: "Mar 31, 2024",
+        probability: 0.38,
+        probabilityDrift: -0.9,
+        volumeGrowth24h: 54.3,
+        currentVolume: "$1.8M",
+        sparklineData: [0.41, 0.39, 0.40, 0.38, 0.39, 0.37, 0.38]
+    },
+    {
+        id: "market-5",
+        title: "Ethereum $5k by June",
+        category: "Crypto",
+        resolutionDate: "Jun 30, 2024",
+        probability: 0.62,
+        probabilityDrift: 4.2,
+        volumeGrowth24h: 123.7,
+        currentVolume: "$4.1M",
+        sparklineData: [0.58, 0.60, 0.59, 0.61, 0.62, 0.63, 0.62]
+    }
+];
+
+// Mock markets for store
+export const mockMarkets = [
+    {
+        id: "market-1",
+        question: "Will Bitcoin reach $100k by EOY 2024?",
+        conditionId: "0x123456789",
+        slug: "bitcoin-100k-2024",
+        endDate: "2024-12-31T23:59:59Z",
+        startDate: "2024-01-01T00:00:00Z",
+        image: "https://images.unsplash.com/photo-1621761191319-c6fb62004040?w=400",
+        icon: "₿",
+        description: "Bitcoin price prediction market",
+        outcomes: "[\"Yes\", \"No\"]",
+        outcomePrices: "[\"0.45\", \"0.55\"]",
+        volume: "$2.5M",
+        volumeNum: 2500000,
+        liquidity: 500000,
+        active: true,
+        closed: false,
+        rewardsMinSize: 10,
+        rewardsMaxSpread: 5,
+        spread: 2.1,
+        bestAsk: 0.47,
+        lastTradePrice: 0.46
+    },
+    {
+        id: "market-2",
+        question: "Who will win the 2024 US Presidential Election?",
+        conditionId: "0x987654321",
+        slug: "us-presidential-2024",
+        endDate: "2024-11-05T23:59:59Z",
+        startDate: "2024-01-01T00:00:00Z",
+        image: "https://images.unsplash.com/photo-1540910419868-47ed94a0b462?w=400",
+        icon: "🇺🇸",
+        description: "US Presidential Election winner prediction",
+        outcomes: "[\"Trump\", \"Biden\", \"Other\"]",
+        outcomePrices: "[\"0.55\", \"0.35\", \"0.10\"]",
+        volume: "$8.1M",
+        volumeNum: 8100000,
+        liquidity: 1500000,
+        active: true,
+        closed: false,
+        rewardsMinSize: 5,
+        rewardsMaxSpread: 3,
+        spread: 1.8,
+        bestAsk: 0.57,
+        lastTradePrice: 0.56
+    }
+];
+
+// Mock events for store
+export const mockEvents = [
+    {
+        id: "event-1",
+        ticker: "BTC-100K",
+        slug: "bitcoin-100k-prediction",
+        title: "Bitcoin $100k Prediction",
+        description: "Will Bitcoin reach $100,000 by end of 2024?",
+        image: "https://images.unsplash.com/photo-1621761191319-c6fb62004040?w=400",
+        icon: "₿",
+        category: "Crypto",
+        subcategory: "Price Prediction",
+        startDate: "2024-01-01T00:00:00Z",
+        endDate: "2024-12-31T23:59:59Z",
+        volume: "$2.5M",
+        volumeNum: 2500000,
+        active: true,
+        closed: false,
+        featured: true,
+        promoted: false,
+        markets: [mockMarkets[0]]
+    },
+    {
+        id: "event-2",
+        ticker: "US-2024",
+        slug: "us-presidential-election-2024",
+        title: "2024 US Presidential Election",
+        description: "Who will win the 2024 US Presidential Election?",
+        image: "https://images.unsplash.com/photo-1540910419868-47ed94a0b462?w=400",
+        icon: "🇺🇸",
+        category: "Politics",
+        subcategory: "Election",
+        startDate: "2024-01-01T00:00:00Z",
+        endDate: "2024-11-05T23:59:59Z",
+        volume: "$8.1M",
+        volumeNum: 8100000,
+        active: true,
+        closed: false,
+        featured: true,
+        promoted: true,
+        markets: [mockMarkets[1]]
+    }
+];
+
+// Mock user profile values
 export const userProfileValues = {
-  balance: 14520.50,
-  pnlDay: 320.15,
-  pnlTotal: 4500.00,
-  positions: 5,
-  rank: 124,
-}
+    username: "trader123",
+    email: "trader@example.com",
+    walletAddress: "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+    totalVolume: 125000,
+    totalPnL: 8750,
+    winRate: 0.67,
+    favoriteCategories: ["Crypto", "Politics", "Sports"],
+    riskTolerance: "medium",
+    autoTradeEnabled: false,
+    rank: 47,
+    balance: 45230,
+    pnlDay: 1250,
+    pnlTotal: 8750,
+    positions: 12
+};
 
-// Extra Mock Data
+// Mock chart data for dashboard
 export const mockChartData = [
-  { date: "00:00", yes: 45, no: 55 },
-  { date: "04:00", yes: 48, no: 52 },
-  { date: "08:00", yes: 52, no: 48 },
-  { date: "12:00", yes: 50, no: 50 },
-  { date: "16:00", yes: 55, no: 45 },
-  { date: "20:00", yes: 58, no: 42 },
-  { date: "Now", yes: 60, no: 40 },
-]
+    { date: '00:00', yes: 45, no: 55 },
+    { date: '04:00', yes: 47, no: 53 },
+    { date: '08:00', yes: 44, no: 56 },
+    { date: '12:00', yes: 48, no: 52 },
+    { date: '16:00', yes: 46, no: 54 },
+    { date: '20:00', yes: 49, no: 51 },
+    { date: '24:00', yes: 47, no: 53 }
+];
 
-export const mockActivities = [
-  { id: "1", user: "trader_1", action: "buy" as const, market: "This Market", outcome: "Yes", amount: "$500", odds: 58, time: "1m ago" },
-  { id: "2", user: "whale_x", action: "sell" as const, market: "This Market", outcome: "Yes", amount: "$5,000", odds: 60, time: "5m ago" },
-  { id: "3", user: "arb_bot", action: "buy" as const, market: "This Market", outcome: "No", amount: "$1,200", odds: 42, time: "12m ago" },
-]
-// --- Top Traders / Whales Data ---
-export type TopTrader = {
-  rank: number;
-  name: string;
-  pnl: number;
-  volume: number;
-  winRate: number;
-  avatar?: string;
-}
-
-export const mockTopTraders: TopTrader[] = [
-  { rank: 1, name: "whale_0x", pnl: 452000, volume: 12500000, winRate: 68 },
-  { rank: 2, name: "alpha_seeker", pnl: 320000, volume: 8500000, winRate: 62 },
-  { rank: 3, name: "fomoboy", pnl: 150000, volume: 4200000, winRate: 55 },
-  { rank: 4, name: "smart_money", pnl: 120000, volume: 3100000, winRate: 71 },
-  { rank: 5, name: "degen_king", pnl: 98000, volume: 2800000, winRate: 48 },
+// Mock top traders for dashboard
+export const mockTopTraders = [
+    { rank: 1, name: "CryptoWhale", pnl: 45230 },
+    { rank: 2, name: "PoliticsPro", pnl: 38750 },
+    { rank: 3, name: "SportsGuru", pnl: 32180 },
+    { rank: 4, name: "MarketMaster", pnl: 28950 },
+    { rank: 5, name: "RiskTaker", pnl: 25640 },
+    { rank: 6, name: "TrendHunter", pnl: 22480 },
+    { rank: 7, name: "OddsOracle", pnl: 19870 },
+    { rank: 8, name: "BetKing", pnl: 17650 },
+    { rank: 9, name: "ProphetAI", pnl: 15230 },
+    { rank: 10, name: "LuckyBet", pnl: 12890 }
 ];

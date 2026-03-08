@@ -4,6 +4,7 @@ import { JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Ubuntu as V0_Font_Ubuntu } from 'next/font/google'
 import { AuthProvider } from "@/components/auth/AuthProvider"
+import { Providers } from "@/components/providers"
 import { Toaster } from "sonner"
 
 // Initialize fonts
@@ -26,9 +27,11 @@ export default function RootLayout({
       <body
         className="antialiased"
       >
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+        <Providers>
+          <AuthProvider>
+            {children}
+          </AuthProvider>
+        </Providers>
         <Toaster
           theme="dark"
           position="top-right"

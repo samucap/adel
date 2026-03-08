@@ -14,9 +14,9 @@ const BASE_CLEAN_EVENTS: CleanEvent[] = [
         },
         volume24hrClob: 8100000,
         liquidityClob: 1500000,
-        oneHourPriceChange: 0.05,
-        oneDayPriceChange: -0.02,
-        lastTradePrice: 0.72,
+        liquidity: 2000000,
+        endDate: "2024-11-05T00:00:00Z",
+        startTime: "2024-01-01T00:00:00Z",
         displayData: {
             outcomes: [
                 { id: "o1", label: "Donald Trump", price: 0.72, image: "https://images.unsplash.com/photo-1540910419868-47ed94a0b462?auto=format&fit=crop&q=80&w=200&h=200", change24h: 0.05 },
@@ -39,9 +39,9 @@ const BASE_CLEAN_EVENTS: CleanEvent[] = [
         },
         volume24hrClob: 5400000,
         liquidityClob: 800000,
-        oneHourPriceChange: 0.01,
-        oneDayPriceChange: 0.03,
-        lastTradePrice: 0.52,
+        liquidity: 1000000,
+        endDate: "2024-02-11T18:30:00Z",
+        startTime: "2024-02-11T15:30:00Z",
         displayData: {
             outcomes: [
                 { id: "o_kc", label: "Chiefs", price: 0.52, sportsMarketType: "winner" },
@@ -66,9 +66,9 @@ const BASE_CLEAN_EVENTS: CleanEvent[] = [
         },
         volume24hrClob: 3200000,
         liquidityClob: 500000,
-        oneHourPriceChange: -0.01,
-        oneDayPriceChange: -0.05,
-        lastTradePrice: 0.45,
+        liquidity: 800000,
+        endDate: "2024-05-26T20:00:00Z",
+        startTime: "2024-05-26T13:00:00Z",
         displayData: {
             outcomes: [
                 { id: "o_ars", label: "Arsenal", price: 0.45, sportsMarketType: "winner" },
@@ -94,9 +94,9 @@ const BASE_CLEAN_EVENTS: CleanEvent[] = [
         },
         volume24hrClob: 2500000,
         liquidityClob: 300000,
-        oneHourPriceChange: 0.02,
-        oneDayPriceChange: 0.10,
-        lastTradePrice: 0.45,
+        liquidity: 500000,
+        endDate: "2024-12-31T23:59:59Z",
+        startTime: "2024-01-01T00:00:00Z",
         displayData: {
             outcomes: [
                 { id: "o_yes", label: "Yes", price: 0.45, change24h: 0.12 }
