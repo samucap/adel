@@ -5,6 +5,7 @@ import "./globals.css";
 import { Ubuntu as V0_Font_Ubuntu } from 'next/font/google'
 import { AuthProvider } from "@/components/auth/AuthProvider"
 import { Providers } from "@/components/providers"
+import { NavigationProgress } from "@/components/ui/navigation-progress"
 import { Toaster } from "sonner"
 
 // Initialize fonts
@@ -29,6 +30,7 @@ export default function RootLayout({
       >
         <Providers>
           <AuthProvider>
+            <NavigationProgress />
             {children}
           </AuthProvider>
         </Providers>

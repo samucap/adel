@@ -7,14 +7,17 @@
 import type {
     PricePoint,
     Orderbook,
+    TopHoldersResponse,
 } from "@/types";
 
-const BASE = "/api/proxy";
+// Direct Polymarket API endpoints (no proxy needed)
+const CLOB_API = "https://clob.polymarket.com"
+const DATA_API = "https://data-api.polymarket.com"
 
 // ── Helper: safe JSON fetch with timeout ───────────────────────
-async function fetchJSON<T>(url: string, init?: RequestInit): Promise<T> {
+async function fetchJSON<T>(url: string, init?: RequestInit, timeoutMs: number = 15_000): Promise<T> {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 15_000);
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
         const res = await fetch(url, {
@@ -34,123 +37,123 @@ async function fetchJSON<T>(url: string, init?: RequestInit): Promise<T> {
     }
 }
 
-// ── Fetch a Single Market Detail ───────────────────────────────
-export interface MarketDetail {
-    conditionId: string;
-    question: string;
-    description: string;
-    slug: string;
-    image: string;
-    icon: string;
-    yesPrice: number;
-    noPrice: number;
-    yesTokenId: string;
-    noTokenId: string;
-    volume: number;
-    liquidity: number;
-    openInterest: number;
-    endDate: string | null;
-    category: string;
-    active: boolean;
-    closed: boolean;
-    tags: string[];
-    change24h: number;
-}
-
-export async function fetchMarketDetail(
-    conditionId: string
-): Promise<MarketDetail> {
-    return fetchJSON<MarketDetail>(`${BASE}/market/${conditionId}`);
-}
+// Market details are now available from events-v2 response, no need for separate API calls
 
 // ── Price History ──────────────────────────────────────────────
 export async function fetchPriceHistory(
     tokenId: string,
-    fidelity: number = 60
+    fidelity: number = 60,
+    interval: string = "max"
 ): Promise<PricePoint[]> {
-    return fetchJSON<PricePoint[]>(
-        `${BASE}/prices?token_id=${tokenId}&fidelity=${fidelity}`
+    const data = await fetchJSON<{ history: PricePoint[] }>(
+        `${CLOB_API}/prices-history?market=${tokenId}&interval=${interval}&fidelity=${fidelity}`
     );
+    return data.history || [];
 }
 
-// ── Orderbook ──────────────────────────────────────────────────
-export async function fetchOrderbook(tokenId: string): Promise<Orderbook> {
-    return fetchJSON<Orderbook>(`${BASE}/book?token_id=${tokenId}`);
+// ── Batch Orderbooks ─────────────────────────────────────────────
+export async function fetchOrderbooks(tokenIds: string[]): Promise<Orderbook[]> {
+    const requestBody = tokenIds.map(tokenId => ({ token_id: tokenId }));
+    return fetchJSON<Orderbook[]>(`${CLOB_API}/books`, {
+        method: "POST",
+        body: JSON.stringify(requestBody),
+    });
 }
 
-// ── Event Detail ───────────────────────────────────────────────
-export interface EventDetail {
-    id: string;
-    title: string;
-    description: string;
-    slug: string;
-    image: string;
-    category: string;
-    endDate: string;
-    active: boolean;
-    volume: number;
-    liquidity: number;
-    markets: any[];
-}
+// Event descriptions now come from events-v2 subtitle field
 
-export async function fetchEventDetail(eventId: string): Promise<EventDetail> {
-    return fetchJSON<EventDetail>(`${BASE}/event/${eventId}`);
+// ── Top Holders ──────────────────────────────────────────────────
+export async function fetchTopHolders(
+    conditionIds: string[],
+    limit: number = 20
+): Promise<TopHoldersResponse> {
+    const marketParam = conditionIds.join(',');
+    return fetchJSON<TopHoldersResponse>(`${DATA_API}/holders?market=${marketParam}&limit=${limit}`);
 }
 
 // ── Batch fetch token IDs for multiple outcomes ────────────────
 export interface TokenIdMapping {
     marketId: string;
-    tokenId: string;
+    conditionId: string;     // For holders API (0x-prefixed 64-hex)
+    clobTokenId: string;     // YES token for prices/orderbooks (0x-prefixed ERC1155)
+    clobTokenIdNo?: string;  // NO token for orderbook display (0x-prefixed ERC1155)
     outcomeIndex: number;
+    negRisk?: boolean;
+}
+
+// ── Gamma API endpoint ──────────────────────
+const GAMMA_API = "https://gamma-api.polymarket.com"
+
+// ── Helper: parse JSON string arrays from Gamma API ────────────
+function safeParseJsonArray(str: string | undefined | null): string[] {
+    if (!str) return [];
+    try {
+        const parsed = JSON.parse(str);
+        return Array.isArray(parsed) ? parsed : [];
+    } catch {
+        return [];
+    }
 }
 
 export async function fetchTokenIdsForOutcomes(
     outcomes: Array<{ id?: string; marketId?: string }>
 ): Promise<TokenIdMapping[]> {
-    // For now, let's use a simplified approach where we try to get token IDs
-    // This may need to be updated based on actual Polymarket API structure for multi-outcome markets
-    const mappings: TokenIdMapping[] = [];
-
-    for (let i = 0; i < outcomes.length; i++) {
-        const outcome = outcomes[i];
+    // Create promises for all outcomes (parallel execution)
+    const promises = outcomes.map(async (outcome, i) => {
         const marketId = outcome.id || outcome.marketId;
 
-        if (!marketId) continue;
+        if (!marketId) {
+            throw new Error(`Outcome ${i} has no marketId`);
+        }
 
         try {
-            // For multi-outcome markets, each outcome may have its own token ID
-            // For now, we'll try to fetch market details and see what we get
-            const marketDetail = await fetchMarketDetail(marketId);
+            // Call Gamma API through proxy to get the real conditionId and clobTokenIds
+            // Use shorter timeout (8s) since we're running in parallel
+            const marketData = await fetchJSON<{
+                conditionId: string;
+                clobTokenIds: string[]; // JSON string array like '["0x...", "0x..."]'
+            }>(`${GAMMA_API}/markets/${encodeURIComponent(marketId)}`, undefined, 8000);
 
-            // If this is a binary market (has yes/no token IDs), use the appropriate one
-            // For multi-outcome, we might need to handle differently
-            let tokenId = marketDetail.yesTokenId;
-
-            if (tokenId) {
-                mappings.push({
-                    marketId,
-                    tokenId,
-                    outcomeIndex: i,
-                });
-            } else {
-                // Fallback: use marketId as tokenId for now (this may not work)
-                console.warn(`No token ID found for market ${marketId}, using marketId as fallback`);
-                mappings.push({
-                    marketId,
-                    tokenId: marketId,
-                    outcomeIndex: i,
-                });
-            }
-        } catch (error) {
-            console.warn(`Failed to fetch token ID for market ${marketId}:`, error);
-            // For development, use marketId as fallback
-            mappings.push({
+            const clobTokenIds = safeParseJsonArray(marketData.clobTokenIds.join(','));
+            return {
                 marketId,
-                tokenId: marketId,
+                conditionId: marketData.conditionId,
+                clobTokenId: clobTokenIds[0] || '', // YES token (index 0)
+                clobTokenIdNo: clobTokenIds[1] || '', // NO token (index 1)
                 outcomeIndex: i,
-            });
+                negRisk: false, // Default to false; can be updated if negRisk info is available in events-v2
+            };
+        } catch (error) {
+            console.warn(`Failed to fetch token IDs for market ${marketId}:`, error);
+            // Fallback: use empty conditionId so downstream consumers skip this entry
+            return {
+                marketId,
+                conditionId: '', // Empty fallback - prevents bad IDs from reaching holders API
+                clobTokenId: '', // Empty fallback
+                outcomeIndex: i,
+                negRisk: false,
+            };
         }
-    }
+    });
 
-    return mappings;
+    // Wait for all promises to settle (parallel execution)
+    const results = await Promise.allSettled(promises);
+
+    // Process results in order (maintaining outcomeIndex order)
+    return results.map((result, i) => {
+        if (result.status === 'fulfilled') {
+            return result.value;
+        } else {
+            console.warn(`Promise ${i} rejected:`, result.reason);
+            // Return fallback for rejected promises
+            return {
+                marketId: outcomes[i].id || outcomes[i].marketId || '',
+                conditionId: '',
+                clobTokenId: '',
+                outcomeIndex: i,
+                negRisk: false,
+                clobTokenIdNo: '',
+            };
+        }
+    });
 }

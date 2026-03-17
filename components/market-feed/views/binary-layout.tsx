@@ -55,6 +55,11 @@ export function BinaryLayout({ event }: BinaryLayoutProps) {
                     </div>
                 </div>
 
+                {/* Probability Progress Bar */}
+                <div className="h-2 w-full bg-[#1a1a20] rounded-full overflow-hidden">
+                  <div className="h-full bg-primary shadow-[0_0_10px_rgba(57,255,20,0.5)] transition-all duration-1000" style={{width: `${pricePercent}%`}}></div>
+                </div>
+
                 {/* Sparkline Placeholder */}
                 <div className="h-10 w-24 opacity-30">
                     <svg viewBox="0 0 100 40" className="w-full h-full overflow-visible">

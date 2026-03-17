@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { useEventStore } from "@/stores/eventStore"
-import { useOrderbook } from "@/lib/polymarket-hooks"
+import { useOrderbooks } from "@/lib/polymarket-hooks"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -11,25 +11,49 @@ import {
   DollarSign,
   Activity,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  MessageSquare,
+  Bot,
+  Loader2,
+  Sparkles
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-// Mock trades data (real trades would come from WebSocket)
-const mockTrades = [
-  { id: 1, price: 0.642, size: 500, timestamp: Date.now() - 1000, side: 'buy' },
-  { id: 2, price: 0.641, size: 1200, timestamp: Date.now() - 3000, side: 'sell' },
-  { id: 3, price: 0.643, size: 800, timestamp: Date.now() - 5000, side: 'buy' },
-  { id: 4, price: 0.640, size: 300, timestamp: Date.now() - 8000, side: 'sell' },
-  { id: 5, price: 0.644, size: 1500, timestamp: Date.now() - 10000, side: 'buy' },
+// Mock comments data
+const mockComments = [
+  { user: "WhaleTrader99", text: "Volume spike incoming, Fed minutes leak?", time: "2m ago", hasPosition: true },
+  { user: "AlgoBot_01", text: "Arb opportunity closed between 95 and 96.", time: "5m ago", hasPosition: false },
+  { user: "YieldFarmer", text: "I'm holding YES until expiration.", time: "12m ago", hasPosition: true },
+  { user: "RateWatcher", text: "Bids are stacking up heavy at 94c.", time: "15m ago", hasPosition: false },
+  { user: "MacroGod", text: "CPI print tomorrow will shift this to 99c.", time: "30m ago", hasPosition: true },
 ]
 
 export function MarketSidebar() {
   const { currEv, currMkt, selectedOutcome, getCurrentMarketTokenId } = useEventStore()
 
+  // AI Comment Sentiment State
+  const [commentSentiment, setCommentSentiment] = useState<{ loading: boolean, data: string | null, error: string | null }>({ loading: false, data: null, error: null })
+
   // Get real orderbook data
-  const tokenId = getCurrentMarketTokenId()
-  const { data: orderbook } = useOrderbook(tokenId || "")
+  const tokenIds = Array.from(currEv?.displayData.outcomes?.map(o => JSON.parse(o.clobTokenIds)) || []).flat()
+  const { data: orderbooks } = useOrderbooks(tokenIds)
+  const orderbook = orderbooks?.[0] || null
+
+  // AI Sentiment Handler
+  const handleGenerateSentiment = async () => {
+    setCommentSentiment({ loading: true, data: null, error: null })
+    try {
+      // Mock AI response
+      await new Promise(resolve => setTimeout(resolve, 1500))
+      setCommentSentiment({
+        loading: false,
+        data: "Mixed sentiment detected. Bullish positioning from institutional traders balanced by cautious commentary from rate watchers. Overall market psychology leans slightly bullish with 65% of recent comments expressing confidence in the YES outcome.",
+        error: null
+      })
+    } catch (err) {
+      setCommentSentiment({ loading: false, data: null, error: "Failed to analyze sentiment." })
+    }
+  }
 
   const currentPrice = currMkt?.price || 0
   const volume24h = currEv?.volume24hrClob || 0
@@ -95,10 +119,10 @@ export function MarketSidebar() {
               Orderbook
             </TabsTrigger>
             <TabsTrigger
-              value="trades"
+              value="comments"
               className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#00F0FF] data-[state=active]:text-[#00F0FF] px-4 py-2"
             >
-              Trades
+              Comments
             </TabsTrigger>
           </TabsList>
 
@@ -114,16 +138,13 @@ export function MarketSidebar() {
               {/* Orderbook Content - Ladder Layout */}
               {orderbook ? (
                 <div className="flex-1 flex flex-col">
-                  {/* Asks (top) - sorted ascending (lowest price first, nearest to spread) */}
+                  {/* Combined Orderbook - both asks and bids in descending order */}
                   <div className="flex-1 space-y-1">
-                    <div className="text-xs text-[#FF4D00] font-mono mb-2 flex items-center gap-1">
-                      <ChevronUp className="w-3 h-3" />
-                      Asks (Sell Orders)
-                    </div>
+                    {/* Asks (Sell Orders) - sorted descending (highest price first) */}
                     {orderbook.asks
                       .slice()
-                      .sort((a, b) => parseFloat(a.price) - parseFloat(b.price))
-                      .slice(0, 10)
+                      .sort((a, b) => parseFloat(b.price) - parseFloat(a.price))
+                      .slice(0, 8)
                       .map((ask, i) => (
                         <OrderbookRow
                           key={`ask-${i}`}
@@ -132,32 +153,26 @@ export function MarketSidebar() {
                           type="ask"
                         />
                       ))}
-                  </div>
 
-                  {/* Spread Indicator */}
-                  {orderbook.asks.length > 0 && orderbook.bids.length > 0 && (
-                    <div className="text-center py-2 border-y border-[#39FF14]/20 my-2">
-                      <div className="text-xs text-[#00F0FF] font-mono bg-black/50 px-2 py-1 rounded">
-                        Spread: {(() => {
-                          const bestAsk = Math.min(...orderbook.asks.map(a => parseFloat(a.price)))
-                          const bestBid = Math.max(...orderbook.bids.map(b => parseFloat(b.price)))
-                          const spread = ((bestAsk - bestBid) * 100).toFixed(1)
-                          return `${spread}¢`
-                        })()}
+                    {/* Spread Indicator */}
+                    {orderbook.asks.length > 0 && orderbook.bids.length > 0 && (
+                      <div className="text-center py-1 border-y border-[#39FF14]/20 my-1">
+                        <div className="text-[10px] text-[#00F0FF] font-mono bg-black/50 px-2 py-0.5 rounded">
+                          Spread: {(() => {
+                            const bestAsk = Math.min(...orderbook.asks.map(a => parseFloat(a.price)))
+                            const bestBid = Math.max(...orderbook.bids.map(b => parseFloat(b.price)))
+                            const spread = ((bestAsk - bestBid) * 100).toFixed(1)
+                            return `${spread}¢`
+                          })()}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
 
-                  {/* Bids (bottom) - sorted descending (highest price first, nearest to spread) */}
-                  <div className="flex-1 space-y-1">
-                    <div className="text-xs text-[#39FF14] font-mono mb-2 flex items-center gap-1">
-                      <ChevronDown className="w-3 h-3" />
-                      Bids (Buy Orders)
-                    </div>
+                    {/* Bids (Buy Orders) - sorted descending (highest price first) */}
                     {orderbook.bids
                       .slice()
                       .sort((a, b) => parseFloat(b.price) - parseFloat(a.price))
-                      .slice(0, 10)
+                      .slice(0, 8)
                       .map((bid, i) => (
                         <OrderbookRow
                           key={`bid-${i}`}
@@ -176,29 +191,68 @@ export function MarketSidebar() {
                 </div>
               )}
             </div>
+
+            {/* Buy Buttons */}
+            <div className="p-4 border-t border-[#39FF14]/20 bg-[#141419] shrink-0">
+              <div className="flex gap-3">
+                <button className="flex-1 bg-[#39FF14] hover:bg-[#39FF14]/80 text-black font-bold py-3 rounded-lg shadow-[0_0_15px_rgba(57,255,20,0.3)] transition-all flex justify-center items-center gap-2">
+                  Buy YES <span className="bg-black/20 px-1.5 py-0.5 rounded text-[10px] tracking-wider">{currMkt ? (currMkt.price * 100).toFixed(1) : '0.0'}¢</span>
+                </button>
+                <button className="flex-1 bg-[#FF4D00] hover:bg-[#FF4D00]/80 text-white font-bold py-3 rounded-lg shadow-[0_0_15px_rgba(255,77,0,0.3)] transition-all flex justify-center items-center gap-2">
+                  Buy NO <span className="bg-white/20 px-1.5 py-0.5 rounded text-[10px] tracking-wider">{currMkt ? ((1 - currMkt.price) * 100).toFixed(1) : '0.0'}¢</span>
+                </button>
+              </div>
+            </div>
           </TabsContent>
 
-          <TabsContent value="trades" className="flex-1 overflow-hidden m-0">
-            <div className="p-4 h-full overflow-y-auto custom-scrollbar">
-              <div className="space-y-2">
-                {mockTrades.map((trade) => (
-                  <motion.div
-                    key={trade.id}
-                    className="flex items-center justify-between p-2 bg-black/50 border border-[#39FF14]/10 rounded text-xs font-mono"
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <div className="flex items-center gap-2">
-                      <div className={cn(
-                        "w-2 h-2 rounded-full",
-                        trade.side === 'buy' ? "bg-[#39FF14]" : "bg-[#FF4D00]"
-                      )} />
-                      <span className="text-[#00F0FF]">{(trade.price * 100).toFixed(1)}¢</span>
+          <TabsContent value="comments" className="flex-1 overflow-hidden m-0">
+            <div className="flex-1 flex flex-col min-h-0 bg-[#141419]/30">
+
+              {/* AI Sentiment Action Bar */}
+              <div className="p-3 border-b border-[#39FF14]/20 bg-[#141419] flex items-center justify-between shrink-0">
+                <span className="text-xs text-muted-foreground flex items-center gap-2">
+                  <MessageSquare size={14} /> Live Chatter
+                </span>
+                <button
+                  onClick={handleGenerateSentiment}
+                  disabled={commentSentiment.loading}
+                  className="bg-[#39FF14]/20 hover:bg-[#39FF14]/30 border border-[#39FF14]/50 text-[#39FF14] hover:text-white px-3 py-1.5 rounded text-[10px] font-bold transition-colors flex items-center gap-1.5 disabled:opacity-50"
+                >
+                  {commentSentiment.loading ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
+                  ✨ Summarize Vibe
+                </button>
+              </div>
+
+              {/* AI Sentiment Result Area */}
+              {commentSentiment.loading && (
+                <div className="p-3 bg-[#39FF14]/20 border-b border-[#39FF14]/20 text-[#39FF14] text-xs flex items-center gap-2 shrink-0">
+                  <Loader2 size={12} className="animate-spin" /> Analyzing crowd sentiment...
+                </div>
+              )}
+              {commentSentiment.data && !commentSentiment.loading && (
+                <div className="p-3 bg-[#39FF14]/20 border-b border-[#39FF14]/20 text-[#39FF14] text-xs shrink-0 flex items-start gap-2">
+                  <Bot size={14} className="mt-0.5 text-[#39FF14] shrink-0" />
+                  <p className="leading-relaxed">{commentSentiment.data}</p>
+                </div>
+              )}
+
+              <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
+                {mockComments.map((comment, i) => (
+                  <div key={i} className="bg-[#1a1a20] p-3 rounded-lg border border-[#39FF14]/10 shrink-0">
+                    <div className="flex justify-between items-center mb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-[#00F0FF] text-xs">{comment.user}</span>
+                        {comment.hasPosition && <span className="bg-[#39FF14]/20 text-[#39FF14] text-[10px] px-1.5 py-0.5 rounded uppercase font-bold">Holder</span>}
+                      </div>
+                      <span className="text-[10px] text-muted-foreground">{comment.time}</span>
                     </div>
-                    <span className="text-white">{trade.size.toLocaleString()}</span>
-                  </motion.div>
+                    <p className="text-sm text-white">{comment.text}</p>
+                  </div>
                 ))}
+              </div>
+
+              <div className="p-4 border-t border-[#39FF14]/20 bg-[#141419] shrink-0">
+                <input type="text" placeholder="Add a comment..." className="w-full bg-black border border-[#39FF14]/20 rounded-lg py-2.5 px-3 text-sm outline-none focus:border-[#00F0FF] transition-colors text-white" />
               </div>
             </div>
           </TabsContent>

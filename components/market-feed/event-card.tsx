@@ -18,6 +18,7 @@ interface EventCardProps {
 }
 
 export function EventCard({ event }: EventCardProps) {
+
     const {
         title,
         ticker,
@@ -65,28 +66,16 @@ export function EventCard({ event }: EventCardProps) {
     };
 
     const isHighSpread = (spreadBP || 0) > 50;
-    const eventClicker = () => {
-        setCurrEv(event);
-        setCurrMkt(event.displayData.outcomes.find(outcome => outcome.sportsMarketType === 'moneyline'));
-        router.push(`/markets/${event.id}`);
-    }
+    // Event navigation is now handled by Link component
 
-    // TODO:
-    // add clickHandler at Link and set state currEv, and currMkt. CurrEv's the selected event tile
-    // currMkt's the event's primary market, which is the market with sportsMarketType == moneyline 
-    // then route.push to /markets/${market.id}
-
-    // then move vol, liq to under market title
-    // if market has a different image from event.image, use the market's image, else render groupItemTitle with the percentage below it.
-    // no need make the border of the highest probably highlighted, or selected as top
     return (
         <div >
             <Link href={`/markets/${event.id}`} className="block h-full transition-all duration-300 hover:-translate-y-1">
                 <Card
                     className={cn(
-                        "relative overflow-hidden flex flex-col h-full group",
+                        "relative overflow-hidden flex flex-col h-full group rounded-2xl min-h-[220px]",
                         "bg-[#0D1B18]/80 backdrop-blur-sm border-white/5",
-                        "hover:border-primary/40 hover:shadow-lg transition-all duration-500",
+                        "hover:border-primary/40 hover:shadow-lg hover:shadow-primary/20 transition-all duration-500",
                         isDisputed && "border-red-500/30 bg-red-950/10"
                     )}
                 >

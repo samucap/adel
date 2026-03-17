@@ -2,33 +2,41 @@ import { Category, Market } from "@/types/dashboard"
 import { CleanEvent, Outcome, LayoutType } from "@/types"
 import type { FilterOptions } from "./store"
 
+/**
+ * Helper: safe JSON fetch with timeout (10s for backend API calls)
+ */
+async function fetchWithTimeout<T>(url: string, init?: RequestInit): Promise<T> {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10_000);
+
+    try {
+        const res = await fetch(url, {
+            ...init,
+            signal: controller.signal,
+            headers: {
+                "Content-Type": "application/json",
+                ...init?.headers,
+            },
+        });
+        if (!res.ok) {
+            throw new Error(`API ${res.status}: ${res.statusText}`);
+        }
+        return res.json() as Promise<T>;
+    } finally {
+        clearTimeout(timeout);
+    }
+}
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "/api"
 
 /**
  * Fetch top navigation categories
  */
 export async function fetchCats(): Promise<Category[]> {
-    const response = await fetch(`${API_BASE_URL}/top-nav`)
-
-    if (!response.ok) {
-        throw new Error(`Failed to fetch categories: ${response.statusText}`)
-    }
-
-    return await response.json()
+    return fetchWithTimeout<Category[]>(`${API_BASE_URL}/top-nav`)
 }
 
-/**
- * Fetch market details by ID
- */
-export async function fetchMarketById(id: string): Promise<Market | null> {
-    const response = await fetch(`${API_BASE_URL}/markets/${id}`)
-
-    if (!response.ok) {
-        throw new Error(`Failed to fetch market: ${response.statusText}`)
-    }
-
-    return await response.json()
-}
+// Market details are now available from events-v2 response, no need for separate API calls
 
 /**
  * API response shape from /events-v2 (matches orion2.0 V2Event)
@@ -47,6 +55,7 @@ interface EventResponse {
     displayType: 'binary' | 'group' | 'sports' | 'sports_group';
     isLive: boolean;
     statusBadge: string;
+    negRisk?: boolean;
     stats: {
         volumeUSD: string;
         spreadBP: number;
@@ -65,6 +74,7 @@ interface EventResponse {
         color: string;
         image: string;
         sportsMarketType?: string;
+        clobTokenIds: string;
     }>;
     displayData?: {
         type: string;
@@ -105,13 +115,7 @@ export async function fetchEvents(category?: string, filters?: FilterOptions, or
     }
 
     const url = `${API_BASE_URL}/events-v2${params.toString() ? `?${params.toString()}` : ''}`
-    const response = await fetch(url)
-
-    if (!response.ok) {
-        throw new Error(`Failed to fetch events: ${response.statusText}`)
-    }
-
-    const data: EventResponse[] = await response.json()
+    const data: EventResponse[] = await fetchWithTimeout<EventResponse[]>(url)
 
     // Map API response to CleanEvent with simplified mapping
     return data.map((event): CleanEvent => {
@@ -137,6 +141,7 @@ export async function fetchEvents(category?: string, filters?: FilterOptions, or
                 color: o.color || undefined,
                 sportsMarketType: o.sportsMarketType,
                 isWinner: undefined,
+                clobTokenIds: o.clobTokenIds,
             }))
             : undefined;
 
@@ -157,6 +162,7 @@ export async function fetchEvents(category?: string, filters?: FilterOptions, or
             layout,
             isLive: event.isLive,                    // Direct from API
             image: event.image,
+            description: event.subtitle,             // Event description from subtitle field
             statusBadge: event.statusBadge,          // Direct from API
             stats: {
                 volumeUSD: event.stats?.volumeUSD || "0",    // Direct from API
@@ -166,12 +172,14 @@ export async function fetchEvents(category?: string, filters?: FilterOptions, or
             volume24hrClob: event.totalVolume || 0,
             liquidityClob: event.liquidityClob || 0,
             liquidity: event.liquidity || 0,
+            negRisk: event.negRisk,
             displayData: {
                 outcomes,                           // ALL types now
                 participants,                       // Sports enrichment
             },
             endDate: event.endDate,
             startTime: event.startTime,
+            startDate: event.startTime,
         };
     });
 }

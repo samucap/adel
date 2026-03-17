@@ -1,7 +1,7 @@
 import { create } from "zustand"
 import { Market, Category } from "@/types/dashboard"
 import { CleanEvent } from "@/types"
-import { fetchCats, fetchEvents, fetchMarketById } from "./services"
+import { fetchCats, fetchEvents } from "./services"
 import { MOCK_CLEAN_EVENTS } from "@/components/market-feed/mock-data"
 import { useEventStore } from "@/stores/eventStore"
 
@@ -57,7 +57,6 @@ interface AppState {
     setSearchQuery: (query: string) => void
     loadCats: () => Promise<void>
     loadEvents: (category?: string) => Promise<void>
-    loadMarket: (id: string) => Promise<void>
 
     // Event navigation helper
     navigateToEvent: (eventId: string) => void
@@ -134,15 +133,6 @@ export const useAppStore = create<AppState>((set, get) => ({
         }
     },
 
-    loadMarket: async (id: string) => {
-        try {
-            const market = await fetchMarketById(id)
-            // Note: currMkt is now handled by eventStore
-            console.log("Market loaded:", market)
-        } catch (error) {
-            console.error("Failed to load market:", error)
-        }
-    },
 
     // Navigate to event and initialize eventStore
     navigateToEvent: (eventId: string) => {

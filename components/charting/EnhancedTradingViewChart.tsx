@@ -1,14 +1,30 @@
 "use client"
 
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useRef, useState, useCallback, useLayoutEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Maximize2, Minimize2, BarChart3, Wifi, WifiOff, TrendingUp, Eye, EyeOff } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { useEventStore } from '@/stores/eventStore'
-import { usePolymarketWebSocket } from '@/lib/websocket-service'
+import { usePolymarketWebSocket, polymarketWS } from '@/lib/websocket-service'
 import { CHART_COLORS_HEX } from '@/lib/chart-utils'
 import type { PricePoint } from '@/types'
+import {
+  createChart,
+  LineSeries,
+  ColorType,
+  LineStyle,
+  type UTCTimestamp,
+  type IChartApi,
+  type ISeriesApi,
+  type MouseEventParams
+} from 'lightweight-charts'
+
+interface OutcomeOption {
+  id: string
+  label: string
+  color: string
+}
 
 interface OutcomeSeries {
   id: string
@@ -17,8 +33,23 @@ interface OutcomeSeries {
   data: PricePoint[]
 }
 
+interface TooltipEntry {
+  label: string
+  color: string
+  value: number
+  change24h?: number
+}
+
+interface TooltipData {
+  x: number
+  y: number
+  time: string
+  entries: TooltipEntry[]
+}
+
 interface EnhancedTradingViewChartProps {
-  outcomeSeries: OutcomeSeries[]
+  outcomeOptions: OutcomeOption[]   // ALL outcomes (for toggle pills)
+  outcomeSeries: OutcomeSeries[]    // Visible outcomes with data (for lines)
   visibleOutcomes: Set<string>
   onToggleOutcome: (outcomeId: string) => void
   height?: number
@@ -26,6 +57,7 @@ interface EnhancedTradingViewChartProps {
 }
 
 export function EnhancedTradingViewChart({
+  outcomeOptions,
   outcomeSeries,
   visibleOutcomes,
   onToggleOutcome,
@@ -33,158 +65,226 @@ export function EnhancedTradingViewChart({
   className = ''
 }: EnhancedTradingViewChartProps) {
   const containerRef = useRef<HTMLDivElement>(null)
-  const chartRef = useRef<any>(null)
-  const [chartLoaded, setChartLoaded] = useState(false)
-  const [isFullscreen, setIsFullscreen] = useState(false)
-  const [interval, setInterval] = useState('1d')
-  const [isLoading, setIsLoading] = useState(false)
+  const chartApiRef = useRef<{
+    isRemoved: boolean
+    api: IChartApi | null
+    seriesMap: Map<string, { series: ISeriesApi<'Line', any, any, any>, label: string, color: string, tokenId?: string }>
+  }>({
+    isRemoved: false,
+    api: null,
+    seriesMap: new Map()
+  })
 
-  const { currMkt, selectedOutcome } = useEventStore()
+  const [isFullscreen, setIsFullscreen] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+  const [tooltipData, setTooltipData] = useState<TooltipData | null>(null)
+
+  const { currMkt, selectedOutcome, chartInterval, setChartInterval } = useEventStore()
   const { isConnected, connectionStatus } = usePolymarketWebSocket()
 
-  // Initialize chart with dynamic import (lazy-load)
-  const initChart = useCallback(async () => {
-    if (!containerRef.current) return
+  // WebSocket integration for real-time updates
+  useEffect(() => {
+    if (!isConnected) return
 
-    const lc = await import("lightweight-charts")
+    let cleanupPrice: (() => void) | undefined
 
-    // Clean up existing chart
-    if (chartRef.current) {
-      chartRef.current.remove()
+    try {
+      cleanupPrice = polymarketWS.onPriceUpdate((data) => {
+        // Update the chart series if it exists in our series map
+        const seriesInfo = chartApiRef.current.seriesMap.get(data.tokenId)
+        if (seriesInfo?.series && data.price) {
+          try {
+            const newPoint = {
+              time: Math.floor(Date.now() / 1000) as UTCTimestamp,
+              value: data.price
+            }
+            seriesInfo.series.update(newPoint)
+          } catch (error) {
+            console.warn('Error updating chart series:', error)
+          }
+        }
+      })
+    } catch (error) {
+      console.warn('Error setting up WebSocket listeners:', error)
     }
 
-    const chart = lc.createChart(containerRef.current, {
+    return () => {
+      try {
+        cleanupPrice?.()
+      } catch (error) {
+        console.warn('Error cleaning up WebSocket listeners:', error)
+      }
+    }
+  }, [isConnected])
+
+  // Chart lifecycle with useLayoutEffect (like example.ts)
+  useLayoutEffect(() => {
+    if (!containerRef.current) return
+
+    const chartApi = createChart(containerRef.current, {
+      autoSize: true,
       layout: {
-        background: { type: lc.ColorType.Solid, color: "#121212" },
+        background: { type: ColorType.Solid, color: "#121212" },
         textColor: "#A0A0A0",
         fontFamily: "'JetBrains Mono', monospace",
         fontSize: 11,
       },
       grid: {
-        vertLines: { color: "#1F1F1F", style: lc.LineStyle.Dotted },
-        horzLines: { color: "#1F1F1F", style: lc.LineStyle.Dotted },
+        vertLines: { color: "#1F1F1F", style: LineStyle.Dotted },
+        horzLines: { color: "#1F1F1F", style: LineStyle.Dotted },
       },
       crosshair: {
         vertLine: {
           color: "#39FF14",
           width: 1,
-          style: lc.LineStyle.Dashed,
+          style: LineStyle.Dashed,
           labelBackgroundColor: "#39FF14",
         },
         horzLine: {
           color: "#39FF14",
           width: 1,
-          style: lc.LineStyle.Dashed,
+          style: LineStyle.Dashed,
           labelBackgroundColor: "#39FF14",
         },
       },
       rightPriceScale: {
         borderColor: "#1F1F1F",
         scaleMargins: { top: 0.1, bottom: 0.1 },
+        mode: 0, // normal price scale
       },
       timeScale: {
         borderColor: "#1F1F1F",
         timeVisible: true,
         secondsVisible: false,
       },
-      handleScroll: { vertTouchDrag: false },
+      handleScroll: { vertTouchDrag: true },
     })
 
-    chartRef.current = chart
-    setChartLoaded(true)
 
-    // Handle resize
-    const resizeObserver = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        const { width, height } = entry.contentRect
-        chart.applyOptions({ width, height })
+    // Store in ref
+    chartApiRef.current.api = chartApi
+    // Note: resizeObserver was removed - chart autoSize handles resizing
+
+    // Set up crosshair tooltip
+    chartApi.subscribeCrosshairMove((param: MouseEventParams) => {
+      if (param.point === undefined ||
+          !param.time ||
+          param.point.x < 0 ||
+          param.point.y < 0 ||
+          !containerRef.current) {
+        setTooltipData(null)
+        return
+      }
+
+      // Build tooltip entries from all visible series
+      const entries: TooltipEntry[] = []
+      for (const [tokenId, seriesInfo] of chartApiRef.current.seriesMap.entries()) {
+        const seriesData = param.seriesData.get(seriesInfo.series)
+        if (seriesData && 'value' in seriesData && typeof seriesData.value === 'number') {
+          entries.push({
+            label: seriesInfo.label,
+            color: seriesInfo.color,
+            value: seriesData.value,
+          })
+        }
+      }
+
+      if (entries.length > 0) {
+        const timeString = typeof param.time === 'string'
+          ? param.time
+          : new Date(Number(param.time) * 1000).toISOString().slice(0, 10)
+        setTooltipData({
+          x: param.point.x,
+          y: param.point.y,
+          time: timeString,
+          entries,
+        })
+      } else {
+        setTooltipData(null)
       }
     })
-    resizeObserver.observe(containerRef.current)
 
-    return () => {
-      resizeObserver.disconnect()
-      chart.remove()
-    }
+    setIsLoading(false)
   }, [])
 
+  // Series reconciliation - add/remove LineSeries based on visibleOutcomes
   useEffect(() => {
-    initChart()
-    return () => {
-      if (chartRef.current) {
-        chartRef.current.remove()
-        chartRef.current = null
+    if (!chartApiRef.current.api || chartApiRef.current.isRemoved) return
+
+    const chart = chartApiRef.current.api
+    const seriesMap = chartApiRef.current.seriesMap
+    const visibleSeries = outcomeSeries.filter(series => visibleOutcomes.has(series.id))
+
+    // Remove series that are no longer visible
+    for (const [seriesId, seriesInfo] of seriesMap.entries()) {
+      if (!visibleSeries.find(s => s.id === seriesId)) {
+        try {
+          if (!chartApiRef.current.isRemoved) {
+            chart.removeSeries(seriesInfo.series)
+          }
+          seriesMap.delete(seriesId)
+        } catch (error) {
+          console.warn('Error removing series:', error)
+        }
       }
     }
-  }, [initChart])
 
-  // Update data when outcomeSeries changes
-  useEffect(() => {
-    if (!chartRef.current || !outcomeSeries.length) return
+    // Add or update visible series
+    for (let i = 0; i < visibleSeries.length; i++) {
+      const series = visibleSeries[i]
+      const color = series.color // Use color from series data, not re-indexed
 
-    const loadData = async () => {
+      let seriesInfo = seriesMap.get(series.id)
+
+      if (!series.data || series.data.length === 0) continue
+
+      if (!seriesInfo) {
+        // Create new series
+        const lineSeries = chart.addSeries(LineSeries, {
+          color,
+          lineWidth: 2,
+          priceFormat: {
+            type: 'price' as const,
+            precision: 1,
+            minMove: 0.1,
+          },
+        })
+
+        // Set custom formatter for percentage display
+        lineSeries.applyOptions({
+          priceFormat: {
+            type: 'custom' as const,
+            formatter: (price: number) => `${(price * 100).toFixed(1)}%`,
+            minMove: 0.1,
+          },
+        })
+
+        seriesInfo = {
+          series: lineSeries,
+          label: series.label,
+          color,
+        }
+        seriesMap.set(series.id, seriesInfo)
+      }
+
+      // Transform PricePoint { t, p } to lightweight-charts { time, value }
+      const chartData = series.data.map(point => ({
+        time: point.t as UTCTimestamp,
+        value: point.p,
+      }))
+
+      seriesInfo.series.setData(chartData)
+    }
+
+    // Fit content to show all data
+    if (visibleSeries.length > 0) {
       try {
-        const lc = await import("lightweight-charts")
-
-        // Clear existing series by recreating chart
-        initChart()
-
-        // Wait for chart to be ready
-        setTimeout(async () => {
-          if (!chartRef.current) return
-
-          const visibleSeries = outcomeSeries.filter(series => visibleOutcomes.has(series.id))
-
-          for (let i = 0; i < visibleSeries.length; i++) {
-            const series = visibleSeries[i]
-            const colorIndex = i % CHART_COLORS_HEX.length
-            const color = CHART_COLORS_HEX[colorIndex]
-
-            // Only add series if we have data
-            if (!series.data || series.data.length === 0) continue
-
-            // Sort by time and deduplicate
-            const sortedData = series.data
-              .map((p) => ({ time: p.t as number, value: p.p }))
-              .sort((a, b) => a.time - b.time)
-              .filter((p, i, arr) => i === 0 || p.time !== arr[i - 1].time)
-
-            // Skip if no valid data after processing
-            if (sortedData.length === 0) continue
-
-            const lineSeries = chartRef.current.addLineSeries({
-              color,
-              lineWidth: 2,
-              priceFormat: {
-                type: "custom" as const,
-                formatter: (price: number) => `${(price * 100).toFixed(1)}¢`,
-              },
-            })
-
-            lineSeries.setData(sortedData)
-          }
-
-          // Fit content to show all data
-          if (visibleSeries.length > 0) {
-            chartRef.current.timeScale().fitContent()
-          }
-        }, 100)
+        chart.timeScale().fitContent()
       } catch (error) {
-        console.error('Error loading chart data:', error)
+        console.warn('Error fitting content:', error)
       }
     }
-
-    loadData()
-  }, [outcomeSeries, visibleOutcomes, chartLoaded, initChart])
-
-  useEffect(() => {
-    // Simulate loading state
-    if (outcomeSeries.length > 0) {
-      setIsLoading(true)
-      const timer = setTimeout(() => setIsLoading(false), 500)
-      return () => clearTimeout(timer)
-    }
-  }, [outcomeSeries])
+  }, [outcomeSeries, visibleOutcomes])
 
   const toggleFullscreen = () => {
     setIsFullscreen(!isFullscreen)
@@ -215,13 +315,13 @@ export function EnhancedTradingViewChart({
         <div className="flex items-center gap-3">
           {/* Outcome Toggle Pills */}
           <div className="flex items-center gap-1">
-            {outcomeSeries.map((series, index) => {
-              const colorIndex = index % CHART_COLORS_HEX.length
-              const isVisible = visibleOutcomes.has(series.id)
+            {outcomeOptions.map((option, i) => {
+              const isVisible = visibleOutcomes.has(option.id)
+              const color = CHART_COLORS_HEX[i % CHART_COLORS_HEX.length]
               return (
                 <button
-                  key={series.id}
-                  onClick={() => onToggleOutcome(series.id)}
+                  key={`${option.id}-${i}`}
+                  onClick={() => onToggleOutcome(option.id)}
                   className={cn(
                     "flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-mono transition-all",
                     isVisible
@@ -231,10 +331,10 @@ export function EnhancedTradingViewChart({
                 >
                   <div
                     className="w-2 h-2 rounded-full"
-                    style={{ backgroundColor: CHART_COLORS_HEX[colorIndex] }}
+                    style={{ backgroundColor: option.color ? option.color : color }}
                   />
                   <span className="text-white truncate max-w-[60px]">
-                    {series.label}
+                    {option.label}
                   </span>
                   {isVisible ? (
                     <Eye className="w-3 h-3 text-white" />
@@ -271,10 +371,10 @@ export function EnhancedTradingViewChart({
             {['1h', '6h', '1d', '1w', 'max'].map((tf) => (
               <button
                 key={tf}
-                onClick={() => setInterval(tf)}
+                onClick={() => setChartInterval(tf)}
                 className={cn(
                   "px-2 py-1 text-[10px] uppercase font-mono font-bold rounded transition-colors",
-                  interval === tf
+                  chartInterval === tf
                     ? "bg-background shadow-sm text-primary"
                     : "text-muted-foreground hover:text-foreground",
                 )}
@@ -295,43 +395,55 @@ export function EnhancedTradingViewChart({
       </div>
 
       {/* Chart Container */}
-      <div
-        className="w-full relative"
-        style={{ height: isFullscreen ? 'calc(100vh - 120px)' : height - 60 }}
-      >
-        {/* Loading Overlay */}
-        {isLoading && (
-          <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-10">
-            <div className="text-[#00F0FF] font-mono flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 animate-pulse" />
-              Loading Chart Data...
-            </div>
-          </div>
-        )}
-
-        {/* Chart */}
+      <div className="flex flex-1">
         <div
           ref={containerRef}
-          className="w-full h-full"
+          className="flex-1 relative"
           style={{ height: isFullscreen ? 'calc(100vh - 120px)' : height - 60 }}
-          role="img"
-          aria-label="Price chart"
-        />
-
-        {/* Current Price Display - show for primary visible outcome */}
-        {outcomeSeries.length > 0 && visibleOutcomes.size > 0 && (
-          <div className="absolute left-4 top-4 bg-black/80 border border-[#39FF14]/50 rounded px-2 py-1">
-            <div className="text-[#39FF14] font-mono text-sm font-bold">
-              {outcomeSeries
-                .filter(series => visibleOutcomes.has(series.id))
-                .map(series => {
-                  const latestPrice = series.data[series.data.length - 1]?.p || 0
-                  return `${(latestPrice * 100).toFixed(1)}¢`
-                })
-                .join(' / ')}
+      >
+        {/* Loading Overlay */}
+          {isLoading && (
+            <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-10">
+              <div className="text-[#00F0FF] font-mono flex items-center gap-2">
+                <TrendingUp className="w-4 h-4 animate-pulse" />
+                Loading Chart Data...
+              </div>
             </div>
-          </div>
-        )}
+          )}
+
+          {/* Chart */}
+
+          {/* Crosshair Tooltip Overlay */}
+          {tooltipData && (
+            <div
+              className="absolute pointer-events-none z-20 bg-black/90 border border-[#39FF14]/50 rounded-lg px-3 py-2 shadow-lg max-w-xs"
+              style={{
+                left: Math.min(tooltipData.x + 15, (containerRef.current?.clientWidth || 0) - 200),
+                top: Math.max(10, tooltipData.y - 100),
+              }}
+            >
+              <div className="text-xs text-[#00F0FF] font-mono mb-2">
+                {tooltipData.time}
+              </div>
+              <div className="space-y-1">
+                {tooltipData.entries.map((entry, index) => (
+                  <div key={index} className="flex items-center gap-2 text-xs font-mono">
+                    <div
+                      className="w-2 h-2 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: entry.color }}
+                    />
+                    <span className="text-white truncate max-w-[80px] flex-1">
+                      {entry.label}
+                    </span>
+                    <span className="text-[#39FF14] font-bold">
+                      {(entry.value * 100).toFixed(1)}%
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </motion.div>
   )

@@ -49,8 +49,6 @@ class PolymarketWebSocketService {
   // Polymarket WebSocket URL with /ws/market path
   private readonly WS_URL = process.env.NEXT_PUBLIC_POLYMARKET_WS_URL || 'wss://ws-subscriptions-clob.polymarket.com/ws/market'
 
-  // Mock data mode (opt-in only)
-  private useMockData = process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true'
 
   connect(): void {
     if (this.ws?.readyState === WebSocket.OPEN || this.isConnecting) {
@@ -178,11 +176,6 @@ class PolymarketWebSocketService {
 
   private handleConnectionFailure(reason: string): void {
     console.warn(`WebSocket connection failed: ${reason}`)
-    console.warn('Falling back to mock data simulation for development')
-
-    // Enable mock data mode as fallback
-    this.useMockData = true
-    this.simulateMockUpdates()
   }
 
   private simulateMockUpdates(): void {
@@ -253,11 +246,6 @@ class PolymarketWebSocketService {
       this.ws = null
     }
 
-    // Clean up mock intervals if they exist
-    if ((this as any).mockIntervals) {
-      (this as any).mockIntervals.forEach((interval: NodeJS.Timeout) => clearInterval(interval))
-      ;(this as any).mockIntervals = null
-    }
 
     this.subscribedAssetIds.clear()
   }
@@ -395,8 +383,6 @@ class PolymarketWebSocketService {
   }
 
   subscribeToMarket(marketId: string, tokenId: string): void {
-    if (this.useMockData) return
-
     this.subscribedAssetIds.add(tokenId)
 
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
@@ -415,8 +401,6 @@ class PolymarketWebSocketService {
   }
 
   unsubscribeFromMarket(marketId: string, tokenId: string): void {
-    if (this.useMockData) return
-
     this.subscribedAssetIds.delete(tokenId)
 
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
@@ -476,12 +460,6 @@ export function usePolymarketWebSocket() {
   const [connectionStatus, setConnectionStatus] = React.useState<'connecting' | 'connected' | 'disconnected' | 'failed'>('disconnected')
   const [subscribedCount, setSubscribedCount] = React.useState(0)
 
-  // Log mock data mode on first use
-  React.useEffect(() => {
-    if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
-      console.log('🎭 Polymarket WebSocket: Mock data mode enabled')
-    }
-  }, [])
 
   // Update connection status and subscription count
   React.useEffect(() => {
@@ -507,38 +485,36 @@ export function usePolymarketWebSocket() {
       polymarketWS.connect()
     }
 
+    // Capture tokenId at effect setup time to avoid stale closure issues
+    const tokenId = currMkt?.id ? getCurrentMarketTokenId() : null
+
     let unsubscribeOrderbook: (() => void) | null = null
     let unsubscribePrice: (() => void) | null = null
     let unsubscribeTrades: (() => void) | null = null
 
-    if (currMkt?.id) {
-      const tokenId = getCurrentMarketTokenId()
-      if (tokenId) {
-        // For Polymarket, we subscribe to the specific token ID
-        // The marketId is not needed for subscription, just the tokenId
-        polymarketWS.subscribeToMarket('', tokenId)
+    if (tokenId) {
+      // For Polymarket, we subscribe to the specific token ID
+      // The marketId is not needed for subscription, just the tokenId
+      polymarketWS.subscribeToMarket('', tokenId)
 
-        // Set up callbacks for real-time updates
-        unsubscribeOrderbook = polymarketWS.onOrderbookUpdate((data) => {
-          console.log('📊 Orderbook update:', data)
-        })
+      // Set up callbacks for real-time updates
+      // TODO: Implement real-time update handling
+      unsubscribeOrderbook = polymarketWS.onOrderbookUpdate((data) => {
+        // Handle orderbook update
+      })
 
-        unsubscribePrice = polymarketWS.onPriceUpdate((data) => {
-          console.log('💰 Price update:', data)
-        })
+      unsubscribePrice = polymarketWS.onPriceUpdate((data) => {
+        // Handle price update
+      })
 
-        unsubscribeTrades = polymarketWS.onTradeUpdate((data) => {
-          console.log('⚡ Trade update:', data)
-        })
-      }
+      unsubscribeTrades = polymarketWS.onTradeUpdate((data) => {
+        // Handle trade update
+      })
     }
 
     return () => {
-      if (currMkt?.id) {
-        const tokenId = getCurrentMarketTokenId()
-        if (tokenId) {
-          polymarketWS.unsubscribeFromMarket('', tokenId)
-        }
+      if (tokenId) {
+        polymarketWS.unsubscribeFromMarket('', tokenId)
       }
 
       unsubscribeOrderbook?.()
