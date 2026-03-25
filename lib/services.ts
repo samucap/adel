@@ -1,6 +1,7 @@
 import { Category, Market } from "@/types/dashboard"
 import { CleanEvent, Outcome, LayoutType } from "@/types"
 import type { FilterOptions } from "./store"
+import { getClientAuthHeaders } from "./auth-token"
 
 /**
  * Helper: safe JSON fetch with timeout (10s for backend API calls)
@@ -15,6 +16,7 @@ async function fetchWithTimeout<T>(url: string, init?: RequestInit): Promise<T> 
             signal: controller.signal,
             headers: {
                 "Content-Type": "application/json",
+                ...getClientAuthHeaders(),
                 ...init?.headers,
             },
         });

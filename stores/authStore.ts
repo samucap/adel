@@ -1,15 +1,43 @@
 "use client"
 
 import { create } from "zustand"
-import Cookies from "js-cookie"
 import { jwtDecode } from "jwt-decode"
-import { authApi, type AuthUser } from "@/lib/auth-service"
+import { authApi, type AuthUser, formatAuthError } from "@/lib/auth-service"
+import { AUTH_TOKEN_STORAGE_KEY } from "@/lib/auth-token"
 
-const COOKIE_NAME = "auth-token"
-const COOKIE_OPTIONS: Cookies.CookieAttributes = {
-    secure: true,
-    sameSite: "strict",
-    expires: 1, // 1 day
+const TOKEN_STORAGE_KEY = AUTH_TOKEN_STORAGE_KEY
+const REFRESH_SKEW_SECONDS = 60
+
+interface JwtClaims {
+    exp?: number
+}
+
+function getStoredToken(): string | null {
+    if (typeof window === "undefined") {
+        return null
+    }
+    return window.localStorage.getItem(TOKEN_STORAGE_KEY)
+}
+
+function setStoredToken(token: string): void {
+    if (typeof window === "undefined") {
+        return
+    }
+    window.localStorage.setItem(TOKEN_STORAGE_KEY, token)
+}
+
+function clearStoredToken(): void {
+    if (typeof window === "undefined") {
+        return
+    }
+    window.localStorage.removeItem(TOKEN_STORAGE_KEY)
+}
+
+function clearLegacyAuthCookie(): void {
+    if (typeof document === "undefined") {
+        return
+    }
+    document.cookie = "auth-token=; Max-Age=0; Path=/; SameSite=Strict"
 }
 
 interface AuthState {
@@ -21,7 +49,7 @@ interface AuthState {
 
     login: (email: string, password: string) => Promise<void>
     signup: (email: string, password: string) => Promise<void>
-    logout: () => void
+    logout: () => Promise<void>
     verifyToken: () => Promise<void>
     clearError: () => void
 }
@@ -34,69 +62,92 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     error: null,
 
     login: async (email: string, password: string) => {
-        set({ isLoading: true, error: null })
+        // Do not set isLoading: true here — AuthProvider uses isLoading for initial
+        // verifyToken only; toggling it would unmount the whole app during login.
+        set({ error: null })
         try {
             const { token, user } = await authApi.login(email, password)
-            Cookies.set(COOKIE_NAME, token, COOKIE_OPTIONS)
+            clearLegacyAuthCookie()
+            setStoredToken(token)
             set({ token, user, isAuthenticated: true, isLoading: false })
         } catch (err) {
-            const message = err instanceof Error ? err.message : "Login failed"
-            set({ error: message, isLoading: false })
+            set({ error: formatAuthError(err), isLoading: false })
             throw err
         }
     },
 
     signup: async (email: string, password: string) => {
-        set({ isLoading: true, error: null })
+        set({ error: null })
         try {
             const { token, user } = await authApi.register(email, password)
-            Cookies.set(COOKIE_NAME, token, COOKIE_OPTIONS)
+            clearLegacyAuthCookie()
+            setStoredToken(token)
             set({ token, user, isAuthenticated: true, isLoading: false })
         } catch (err) {
-            const message = err instanceof Error ? err.message : "Registration failed"
-            set({ error: message, isLoading: false })
+            set({ error: formatAuthError(err), isLoading: false })
             throw err
         }
     },
 
-    logout: () => {
-        Cookies.remove(COOKIE_NAME)
-        set({
-            user: null,
-            token: null,
-            isAuthenticated: false,
-            isLoading: false,
-            error: null,
-        })
+    logout: async () => {
+        const token = get().token ?? getStoredToken()
+
+        try {
+            if (token) {
+                try {
+                    await authApi.logout(token)
+                } catch {
+                    // Clear local session even if the API is down or token is invalid
+                }
+            }
+        } finally {
+            clearStoredToken()
+            clearLegacyAuthCookie()
+            set({
+                user: null,
+                token: null,
+                isAuthenticated: false,
+                isLoading: false,
+                error: null,
+            })
+        }
     },
 
     verifyToken: async () => {
-        const token = Cookies.get(COOKIE_NAME)
+        clearLegacyAuthCookie()
+        const token = getStoredToken()
 
         if (!token) {
-            set({ isLoading: false, isAuthenticated: false })
+            set({
+                token: null,
+                user: null,
+                isLoading: false,
+                isAuthenticated: false,
+            })
             return
         }
 
         // Quick client-side expiration check
         try {
-            const decoded = jwtDecode<{ exp: number }>(token)
-            if (decoded.exp < Date.now() / 1000) {
+            const decoded = jwtDecode<JwtClaims>(token)
+            const nowInSeconds = Date.now() / 1000
+            const exp = decoded.exp ?? 0
+            if (exp <= nowInSeconds + REFRESH_SKEW_SECONDS) {
                 // Try refresh
                 try {
                     const newToken = await authApi.refresh(token)
-                    Cookies.set(COOKIE_NAME, newToken, COOKIE_OPTIONS)
+                    setStoredToken(newToken)
                     const user = await authApi.verify(newToken)
                     set({ token: newToken, user, isAuthenticated: true, isLoading: false })
                     return
                 } catch {
-                    Cookies.remove(COOKIE_NAME)
+                    clearStoredToken()
                     set({ isLoading: false, isAuthenticated: false })
                     return
                 }
             }
         } catch {
-            Cookies.remove(COOKIE_NAME)
+            clearStoredToken()
             set({ isLoading: false, isAuthenticated: false })
             return
         }
@@ -106,7 +157,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             const user = await authApi.verify(token)
             set({ token, user, isAuthenticated: true, isLoading: false })
         } catch {
-            Cookies.remove(COOKIE_NAME)
+            clearStoredToken()
             set({
                 token: null,
                 user: null,

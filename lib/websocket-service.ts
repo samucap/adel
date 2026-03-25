@@ -55,36 +55,27 @@ class PolymarketWebSocketService {
       return
     }
 
-    // Check if we should use mock data instead
-    if (this.useMockData) {
-      console.log('🔧 Using mock data mode - WebSocket disabled')
-      this.simulateMockUpdates()
-      return
-    }
-
     // Check if we're in a browser environment
     if (typeof window === 'undefined') {
-      console.warn('WebSocket not available in server environment')
+      //console.warn('WebSocket not available in server environment')
       return
     }
 
     this.isConnecting = true
 
     try {
-      console.log('🔌 Connecting to Polymarket WebSocket...')
       this.ws = new WebSocket(this.WS_URL)
 
       // Set connection timeout
       this.connectionTimeout = setTimeout(() => {
         if (this.ws && this.ws.readyState === WebSocket.CONNECTING) {
-          console.warn('WebSocket connection timeout, closing...')
+          //console.warn('WebSocket connection timeout, closing...')
           this.ws.close()
           this.handleConnectionFailure('Connection timeout')
         }
       }, 10000)
 
       this.ws.onopen = () => {
-        console.log('✅ Connected to Polymarket WebSocket')
         this.isConnecting = false
         this.reconnectAttempts = 0
         if (this.connectionTimeout) {
@@ -114,7 +105,6 @@ class PolymarketWebSocketService {
       }
 
       this.ws.onclose = (event) => {
-        console.log(`WebSocket connection closed: ${event.code} ${event.reason}`)
         this.isConnecting = false
         this.stopPingHeartbeat()
         if (this.connectionTimeout) {
@@ -128,8 +118,8 @@ class PolymarketWebSocketService {
         }
       }
 
+      // TOOD need to ensure error in ws handled gracefully
       this.ws.onerror = (error) => {
-        console.error('WebSocket error:', error)
         this.isConnecting = false
         this.stopPingHeartbeat()
         if (this.connectionTimeout) {
@@ -170,17 +160,14 @@ class PolymarketWebSocketService {
         type: 'market'
       }
       this.ws.send(JSON.stringify(subscriptionMessage))
-      console.log('📡 Sent initial subscription:', subscriptionMessage)
     }
   }
 
   private handleConnectionFailure(reason: string): void {
-    console.warn(`WebSocket connection failed: ${reason}`)
+    //console.warn(`WebSocket connection failed: ${reason}`)
   }
 
   private simulateMockUpdates(): void {
-    console.log('🎭 Starting mock data simulation for real-time updates')
-
     // Simulate periodic price updates
     const priceInterval = setInterval(() => {
       const mockPriceUpdate: PriceUpdate = {
@@ -252,15 +239,11 @@ class PolymarketWebSocketService {
 
   private attemptReconnect(): void {
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-      console.warn(`Max reconnection attempts (${this.maxReconnectAttempts}) reached. WebSocket will remain disconnected.`)
-      console.warn('Real-time updates will be unavailable. Consider checking network connectivity or WebSocket endpoint.')
       return
     }
 
     this.reconnectAttempts++
     const delay = Math.min(this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1), 30000) // Cap at 30 seconds
-
-    console.log(`🔄 WebSocket reconnect attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts} in ${delay}ms`)
 
     setTimeout(() => {
       if (!this.isConnecting) { // Don't reconnect if already connecting
@@ -294,8 +277,8 @@ class PolymarketWebSocketService {
         this.handleMarketResolved(message)
         break
       default:
-        // Unknown event type, ignore
-        console.log('Unknown WebSocket event:', message.event_type, message)
+        // TODO: need to handle initial message from ws connection, which is
+        // possibly why its getting to here
         break
     }
   }
@@ -355,19 +338,19 @@ class PolymarketWebSocketService {
 
   private handleBestBidAsk(message: any): void {
     // For now, just log - could be used for more detailed orderbook display
-    console.log('Best bid/ask update:', message)
+    //console.log('Best bid/ask update:', message)
   }
 
   private handleTickSizeChange(message: any): void {
-    console.log('Tick size change:', message)
+    //console.log('Tick size change:', message)
   }
 
   private handleNewMarket(message: any): void {
-    console.log('New market:', message)
+    //console.log('New market:', message)
   }
 
   private handleMarketResolved(message: any): void {
-    console.log('Market resolved:', message)
+    //console.log('Market resolved:', message)
   }
 
   private handleOrderbookUpdate(data: OrderbookUpdate): void {
@@ -386,7 +369,7 @@ class PolymarketWebSocketService {
     this.subscribedAssetIds.add(tokenId)
 
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
-      console.log(`📋 Queued subscription for asset ${tokenId}`)
+      //console.log(`📋 Queued subscription for asset ${tokenId}`)
       return
     }
 
@@ -397,14 +380,14 @@ class PolymarketWebSocketService {
     }
 
     this.ws.send(JSON.stringify(subscriptionMessage))
-    console.log(`📡 Subscribed to asset ${tokenId}`)
+    //console.log(`📡 Subscribed to asset ${tokenId}`)
   }
 
   unsubscribeFromMarket(marketId: string, tokenId: string): void {
     this.subscribedAssetIds.delete(tokenId)
 
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
-      console.log(`📋 Queued unsubscription for asset ${tokenId}`)
+      //console.log(`📋 Queued unsubscription for asset ${tokenId}`)
       return
     }
 
@@ -415,13 +398,13 @@ class PolymarketWebSocketService {
     }
 
     this.ws.send(JSON.stringify(unsubscriptionMessage))
-    console.log(`📤 Unsubscribed from asset ${tokenId}`)
+    //console.log(`📤 Unsubscribed from asset ${tokenId}`)
   }
 
   private resubscribeToAll(): void {
     // The initial subscription will be sent in sendInitialSubscription()
     // which uses the tracked subscribedAssetIds set
-    console.log(`🔄 Resubscribing to ${this.subscribedAssetIds.size} assets`)
+    //console.log(`🔄 Resubscribing to ${this.subscribedAssetIds.size} assets`)
   }
 
   // Callback registration methods
@@ -442,7 +425,7 @@ class PolymarketWebSocketService {
 
   // Get connection status
   isConnected(): boolean {
-    return this.useMockData || this.ws?.readyState === WebSocket.OPEN
+    return this.ws?.readyState === WebSocket.OPEN
   }
 
   // Get number of subscribed assets

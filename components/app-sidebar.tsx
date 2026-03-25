@@ -311,8 +311,8 @@ export function AppSidebar() {
     },
   };
 
-  const handleLogout = () => {
-    authLogout();
+  const handleLogout = async () => {
+    await authLogout();
     router.replace("/login");
   };
 
