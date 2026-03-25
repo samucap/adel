@@ -273,7 +273,10 @@ export function EnhancedTradingViewChart({
         value: point.p,
       }))
 
-      seriesInfo.series.setData(chartData)
+      const uniqueChartData = chartData.filter((point, index, self) =>
+        index === 0 || point.time !== self[index - 1].time
+      )
+      seriesInfo.series.setData(uniqueChartData)
     }
 
     // Fit content to show all data

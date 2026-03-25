@@ -358,7 +358,7 @@ export default function MarketDetailPage() {
                         <div className="w-[60%] flex flex-col gap-6 min-h-0 max-h-[calc(100vh-12rem)]">
                             {/* Main Chart */}
                             <motion.div
-                                className="flex-[3] min-h-0 max-h-[calc(100vh-12rem)]"
+                                className="w-full flex flex-col min-h-0 max-h-[calc(100vh-12rem)]"
                                 initial={{ opacity: 0, scale: 0.95 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 transition={{ delay: 0.1, duration: 0.3 }}
