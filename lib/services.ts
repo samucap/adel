@@ -90,7 +90,6 @@ interface EventResponse {
     };
 }
 
-
 /**
  * Fetch events from the API (localhost:8080/events)
  * Maps the response to CleanEvent[] using server-provided data
