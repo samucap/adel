@@ -1,41 +1,13 @@
 import { Category, Market } from "@/types/dashboard"
 import { CleanEvent, Outcome, LayoutType } from "@/types"
 import type { FilterOptions } from "./store"
-import { getClientAuthHeaders } from "./auth-token"
-
-/**
- * Helper: safe JSON fetch with timeout (10s for backend API calls)
- */
-async function fetchWithTimeout<T>(url: string, init?: RequestInit): Promise<T> {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 10_000);
-
-    try {
-        const res = await fetch(url, {
-            ...init,
-            signal: controller.signal,
-            headers: {
-                "Content-Type": "application/json",
-                ...getClientAuthHeaders(),
-                ...init?.headers,
-            },
-        });
-        if (!res.ok) {
-            throw new Error(`API ${res.status}: ${res.statusText}`);
-        }
-        return res.json() as Promise<T>;
-    } finally {
-        clearTimeout(timeout);
-    }
-}
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "/api"
+import { apiFetch } from "./api-client"
 
 /**
  * Fetch top navigation categories
  */
 export async function fetchCats(): Promise<Category[]> {
-    return fetchWithTimeout<Category[]>(`${API_BASE_URL}/top-nav`)
+    return apiFetch<Category[]>("/top-nav")
 }
 
 // Market details are now available from events-v2 response, no need for separate API calls
@@ -115,8 +87,8 @@ export async function fetchEvents(category?: string, filters?: FilterOptions, or
         if (filters.closed !== undefined) params.set("closed", String(filters.closed))
     }
 
-    const url = `${API_BASE_URL}/events-v2${params.toString() ? `?${params.toString()}` : ''}`
-    const data: EventResponse[] = await fetchWithTimeout<EventResponse[]>(url)
+    const qs = params.toString()
+    const data: EventResponse[] = await apiFetch<EventResponse[]>(`/events-v2${qs ? `?${qs}` : ''}`)
 
     // Map API response to CleanEvent with simplified mapping
     return data.map((event): CleanEvent => {

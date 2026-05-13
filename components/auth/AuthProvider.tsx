@@ -5,12 +5,12 @@ import { useAuthStore } from "@/stores/authStore"
 import { Loader2 } from "lucide-react"
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-    const verifyToken = useAuthStore((s) => s.verifyToken)
+    const initSession = useAuthStore((s) => s.initSession)
     const isLoading = useAuthStore((s) => s.isLoading)
 
     useEffect(() => {
-        verifyToken()
-    }, [verifyToken])
+        initSession()
+    }, [initSession])
 
     if (isLoading) {
         return (

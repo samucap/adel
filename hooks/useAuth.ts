@@ -7,7 +7,7 @@ export function useAuth() {
 
     return {
         user: store.user,
-        token: store.token,
+        expiresAt: store.expiresAt,
         isAuthenticated: store.isAuthenticated,
         isLoading: store.isLoading,
         error: store.error,

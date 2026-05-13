@@ -16,14 +16,20 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { AnimatedGradientText } from "@/components/ui/animated-gradient-text"
 import { Button } from "@/components/ui/button"
-import { Meteors } from "@/components/ui/meteors"
-import { DotPattern } from "@/components/ui/dot-pattern"
-import { cn } from "@/lib/utils"
+import { ParticleNetwork } from "@/components/ui/particle-network"
+
+const passwordSchema = z
+    .string()
+    .min(12, "Password must be at least 12 characters")
+    .regex(/[A-Z]/, "Must contain an uppercase letter")
+    .regex(/[a-z]/, "Must contain a lowercase letter")
+    .regex(/[0-9]/, "Must contain a digit")
+    .regex(/[^A-Za-z0-9]/, "Must contain a special character")
 
 const signupSchema = z
     .object({
         email: z.string().email("Please enter a valid email address"),
-        password: z.string().min(8, "Password must be at least 8 characters"),
+        password: passwordSchema,
         confirmPassword: z.string(),
     })
     .refine((data) => data.password === data.confirmPassword, {
@@ -68,18 +74,7 @@ export default function SignupPage() {
 
     return (
         <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-4">
-            <DotPattern
-                glow
-                width={24}
-                height={24}
-                cr={1}
-                className={cn(
-                    "text-primary/20",
-                    "[mask-image:radial-gradient(400px_circle_at_center,white,transparent)]"
-                )}
-            />
-
-            <Meteors number={12} className="before:from-primary/40" />
+            <ParticleNetwork />
 
             <div className="relative z-10 w-full max-w-md animate-in fade-in slide-in-from-bottom-2 duration-300 fill-mode-both">
                 <Card className="border-border/50 bg-card/80 backdrop-blur-xl rounded-2xl shadow-2xl shadow-primary/5">
@@ -128,7 +123,7 @@ export default function SignupPage() {
                                     id="password"
                                     type="password"
                                     autoComplete="new-password"
-                                    placeholder="••••••••"
+                                    placeholder="••••••••••••"
                                     className="h-11 rounded-lg bg-background/50 border-border/60 pl-3 text-sm transition-all focus-visible:border-primary/50 focus-visible:ring-primary/30 focus-visible:ring-2"
                                     {...register("password")}
                                 />
@@ -146,7 +141,7 @@ export default function SignupPage() {
                                     id="confirmPassword"
                                     type="password"
                                     autoComplete="new-password"
-                                    placeholder="••••••••"
+                                    placeholder="••••••••••••"
                                     className="h-11 rounded-lg bg-background/50 border-border/60 pl-3 text-sm transition-all focus-visible:border-primary/50 focus-visible:ring-primary/30 focus-visible:ring-2"
                                     {...register("confirmPassword")}
                                 />
