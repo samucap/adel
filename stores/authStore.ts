@@ -39,11 +39,15 @@ function clearRefreshTimer() {
 
 function scheduleRefresh(expiresAt: string, doRefresh: () => Promise<unknown>) {
     clearRefreshTimer()
-    const ms = new Date(expiresAt).getTime() - Date.now() - REFRESH_SKEW_MS
-    if (ms <= 0) {
-        doRefresh()
-        return
+    const expiryTime = new Date(expiresAt).getTime()
+    let ms = expiryTime - Date.now() - REFRESH_SKEW_MS
+    
+    // Prevent tight infinite loops if the token is already expired or has invalid date
+    if (isNaN(ms) || ms <= 0) {
+        // Enforce a minimum delay (e.g. 10 seconds) before retrying to prevent crashing the server
+        ms = 10000
     }
+    
     refreshTimer = setTimeout(() => {
         doRefresh()
     }, ms)
