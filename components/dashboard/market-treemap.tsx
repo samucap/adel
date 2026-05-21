@@ -169,21 +169,23 @@ export function MarketTreemap() {
 
             <div className="flex-1 min-h-[300px] relative overflow-hidden rounded-xl border border-white/10 bg-black/20 backdrop-blur-sm">
                 {treemapData.length > 0 ? (
-                    <ResponsiveContainer width="100%" height="100%">
-                        <Treemap
-                            data={treemapData}
-                            dataKey="value"
-                            aspectRatio={4 / 3}
-                            stroke="#1e293b"
-                            fill="#334155"
-                            content={<CustomContent />}
-                            isAnimationActive={true}
-                            animationDuration={750}
-                            animationEasing="ease-out"
-                        >
-                            <Tooltip content={<CustomTooltip />} cursor={false} />
-                        </Treemap>
-                    </ResponsiveContainer>
+                    <div className="absolute inset-0">
+                        <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
+                            <Treemap
+                                data={treemapData}
+                                dataKey="value"
+                                aspectRatio={4 / 3}
+                                stroke="#1e293b"
+                                fill="#334155"
+                                content={<CustomContent />}
+                                isAnimationActive={true}
+                                animationDuration={750}
+                                animationEasing="ease-out"
+                            >
+                                <Tooltip content={<CustomTooltip />} cursor={false} />
+                            </Treemap>
+                        </ResponsiveContainer>
+                    </div>
                 ) : (
                     <div className="flex items-center justify-center h-full text-muted-foreground">
                         Loading treemap data...
