@@ -173,3 +173,7 @@ adel/
 │   └── dashboard.ts           # Market, Event, Category types
 └── public/                    # Static assets
 ```
+
+notes:
+- issue with next.js dev server potentially resolved by modifying setting NODE_OPTIONS like so:  
+    * `NODE_OPTIONS='--max_old_space_size=8192' pnpm dev`

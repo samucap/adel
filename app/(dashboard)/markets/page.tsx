@@ -1,14 +1,13 @@
 "use client"
 
-import React, { useEffect } from "react"
+import { useEffect } from "react"
 import { CategoryNav } from "@/components/category-nav"
 import { MarketFeed } from "@/components/market-feed/market-feed"
-import { useAppStore } from "@/lib/store"
+import { useMarketStore } from "@/stores/marketStore"
 
 export default function MarketsPage() {
-    const { events, eventsLoading, eventsError, loadEvents } = useAppStore();
+    const { events, eventsLoading, eventsError, loadEvents } = useMarketStore();
 
-    // Load all events on mount
     useEffect(() => {
         loadEvents();
     }, [loadEvents]);

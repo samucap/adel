@@ -7,6 +7,7 @@ import {
 import { useState, useEffect } from "react"
 import { usePathname } from "next/navigation"
 import { useAppStore } from "@/lib/store"
+import { useMarketStore } from "@/stores/marketStore"
 import { Search, Filter, ArrowUpDown } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -33,7 +34,6 @@ export function CategoryNav({ hideControls }: CategoryNavProps) {
         topNav,
         topNavLoading,
         loadCats,
-        loadEvents,
         searchQuery,
         setSearchQuery,
         sortBy,
@@ -43,6 +43,7 @@ export function CategoryNav({ hideControls }: CategoryNavProps) {
         viewMode,
         setViewMode
     } = useAppStore()
+    const { loadEvents } = useMarketStore()
     const [selectedCategory, setSelectedCategory] = useState<string>("")
     const [selectedSubcat, setSelectedSubcat] = useState<string | null>(null)
     const [hasUserSelected, setHasUserSelected] = useState(false)
@@ -60,23 +61,20 @@ export function CategoryNav({ hideControls }: CategoryNavProps) {
         }
     }, [topNav, selectedCategory])
 
-    // Load events only when user explicitly selects a category
+    // Load events whenever the selected category or subcategory changes
     useEffect(() => {
-        if (!hasUserSelected) return
-
-        const selectedCatObj = topNav.find((cat) => cat.slug === selectedCategory)
-        if (!selectedCatObj) return
-
-        // If subcategory is selected, use its ID; otherwise use the category ID
+        if (!selectedCategory) return;
+        const selectedCatObj = topNav.find((cat) => cat.slug === selectedCategory);
+        if (!selectedCatObj) return;
         if (selectedSubcat) {
-            const subcatObj = selectedCatObj.related?.find((sub) => sub.slug === selectedSubcat)
+            const subcatObj = selectedCatObj.related?.find((sub) => sub.slug === selectedSubcat);
             if (subcatObj) {
-                loadEvents(subcatObj.id)
+                loadEvents(subcatObj.id);
             }
         } else {
-            loadEvents(selectedCatObj.id)
+            loadEvents(selectedCatObj.id);
         }
-    }, [selectedCategory, selectedSubcat, topNav, loadEvents, hasUserSelected])
+    }, [selectedCategory, selectedSubcat, topNav, loadEvents]);
 
     const handleCategoryChange = (value: string) => {
         if (value) {

@@ -1,41 +1,41 @@
-import { create } from "zustand"
-import { CleanEvent, Outcome } from "@/types"
-import type { TokenIdMapping } from "@/lib/polymarket-api"
+import { create } from "zustand";
+import { CleanEvent, Outcome } from "@/types";
+import type { TokenIdMapping } from "@/lib/polymarket-api";
 
-export type SelectedOutcome = "YES" | "NO"
+export type SelectedOutcome = "YES" | "NO";
 
 interface EventStoreState {
   // Current active event
-  currEv: CleanEvent | null
+  currEv: CleanEvent | null;
 
   // Current selected market (sub-market/candidate)
-  currMkt: Outcome | null
+  currMkt: Outcome | null;
 
   // Selected outcome for trading ("YES" or "NO")
-  selectedOutcome: SelectedOutcome
+  selectedOutcome: SelectedOutcome;
 
   // Chart visibility - which outcomes are shown on the chart
-  visibleOutcomes: Set<string>
+  visibleOutcomes: Set<string>;
 
   // Chart interval for price history
   chartInterval: string;
 
   // Token ID cache - marketId -> TokenIdMapping mappings
-  outcomeTokenIds: Map<string, TokenIdMapping>
+  outcomeTokenIds: Map<string, TokenIdMapping>;
 
   // Actions
-  setCurrentEvent: (event: CleanEvent | null) => void
-  setCurrentMarket: (market: Outcome | null) => void
-  setSelectedOutcome: (outcome: SelectedOutcome) => void
-  toggleOutcomeVisibility: (outcomeId: string) => void
-  setChartInterval: (interval: string) => void
-  setOutcomeTokenId: (marketId: string, tokenMapping: TokenIdMapping) => void
+  setCurrentEvent: (event: CleanEvent | null) => void;
+  setCurrentMarket: (market: Outcome | null) => void;
+  setSelectedOutcome: (outcome: SelectedOutcome) => void;
+  toggleOutcomeVisibility: (outcomeId: string) => void;
+  setChartInterval: (interval: string) => void;
+  setOutcomeTokenId: (marketId: string, tokenMapping: TokenIdMapping) => void;
 
   // Helper functions
-  initializeFromEvent: (event: CleanEvent, marketId?: string) => void
-  getCurrentMarketTokenId: () => string | null
-  getOppositeOutcome: () => SelectedOutcome
-  cleanup: () => void
+  initializeFromEvent: (event: CleanEvent, marketId?: string) => void;
+  getCurrentMarketTokenId: () => string | null;
+  getOppositeOutcome: () => SelectedOutcome;
+  cleanup: () => void;
 }
 
 export const useEventStore = create<EventStoreState>((set, get) => ({
@@ -55,43 +55,50 @@ export const useEventStore = create<EventStoreState>((set, get) => ({
   setSelectedOutcome: (outcome) => set({ selectedOutcome: outcome }),
 
   toggleOutcomeVisibility: (outcomeId: string) => {
-    set(state => {
-      const newVisibleOutcomes = new Set(state.visibleOutcomes)
+    set((state) => {
+      const newVisibleOutcomes = new Set(state.visibleOutcomes);
       if (newVisibleOutcomes.has(outcomeId)) {
-        newVisibleOutcomes.delete(outcomeId)
+        newVisibleOutcomes.delete(outcomeId);
       } else {
-        newVisibleOutcomes.add(outcomeId)
+        newVisibleOutcomes.add(outcomeId);
       }
-      return { visibleOutcomes: newVisibleOutcomes }
-    })
+      return { visibleOutcomes: newVisibleOutcomes };
+    });
   },
 
   setChartInterval: (interval: string) => set({ chartInterval: interval }),
 
   setOutcomeTokenId: (marketId: string, tokenMapping: TokenIdMapping) => {
-    set(state => {
-      const newTokenIds = new Map(state.outcomeTokenIds)
-      newTokenIds.set(marketId, tokenMapping)
-      return { outcomeTokenIds: newTokenIds }
-    })
+    set((state) => {
+      const newTokenIds = new Map(state.outcomeTokenIds);
+      newTokenIds.set(marketId, tokenMapping);
+      return { outcomeTokenIds: newTokenIds };
+    });
   },
 
   // Initialize state from event, optionally setting a specific market
   initializeFromEvent: (event, marketId) => {
-    const outcomes = event.displayData.outcomes || []
+    const outcomes = event.displayData.outcomes || [];
     const primaryMarket = marketId
-      ? outcomes.find(o => o.id === marketId)
-      : outcomes[0] || null
+      ? outcomes.find((o) => o.id === marketId)
+      : outcomes[0] || null;
 
-    let visibleIds: Set<string>
+    let visibleIds: Set<string>;
     if (event.negRisk) {
       // Multi-outcome: show top 4 candidates by probability
-      const TOP_N = 5
-      const sorted = [...outcomes].sort((a, b) => (b.price || 0) - (a.price || 0))
-      visibleIds = new Set(sorted.slice(0, TOP_N).map(o => o.id || "").filter(Boolean))
+      const TOP_N = 5;
+      const sorted = [...outcomes].sort(
+        (a, b) => (b.price || 0) - (a.price || 0),
+      );
+      visibleIds = new Set(
+        sorted
+          .slice(0, TOP_N)
+          .map((o) => o.id || "")
+          .filter(Boolean),
+      );
     } else {
       // Binary: show only primary market
-      visibleIds = new Set(primaryMarket?.id ? [primaryMarket.id] : [])
+      visibleIds = new Set(primaryMarket?.id ? [primaryMarket.id] : []);
     }
 
     set({
@@ -100,28 +107,30 @@ export const useEventStore = create<EventStoreState>((set, get) => ({
       selectedOutcome: "YES",
       visibleOutcomes: visibleIds,
       outcomeTokenIds: new Map<string, TokenIdMapping>(),
-    })
+    });
   },
 
   // Get the token ID for the current market based on selected outcome
   getCurrentMarketTokenId: () => {
-    const { currMkt, selectedOutcome } = get()
-    if (!currMkt?.clobTokenIds) return null
+    const { currMkt, selectedOutcome } = get();
+    if (!currMkt?.clobTokenIds) return null;
 
     try {
-      const tokenIds = JSON.parse(currMkt.clobTokenIds) as string[]
+      const tokenIds = JSON.parse(currMkt.clobTokenIds) as string[];
       // tokenIds[0] = YES token, tokenIds[1] = NO token
-      return selectedOutcome === "YES" ? tokenIds[0] || '' : tokenIds[1] || tokenIds[0] || ''
+      return selectedOutcome === "YES"
+        ? tokenIds[0] || ""
+        : tokenIds[1] || tokenIds[0] || "";
     } catch (error) {
-      console.warn('Failed to parse clobTokenIds:', error)
-      return null
+      console.warn("Failed to parse clobTokenIds:", error);
+      return null;
     }
   },
 
   // Get the opposite outcome for switching
   getOppositeOutcome: () => {
-    const { selectedOutcome } = get()
-    return selectedOutcome === "YES" ? "NO" : "YES"
+    const { selectedOutcome } = get();
+    return selectedOutcome === "YES" ? "NO" : "YES";
   },
 
   // Reset store state (for page unmount)
@@ -133,6 +142,7 @@ export const useEventStore = create<EventStoreState>((set, get) => ({
       visibleOutcomes: new Set<string>(),
       chartInterval: "1d",
       outcomeTokenIds: new Map<string, TokenIdMapping>(),
-    })
+    });
   },
-}))
+}));
+
