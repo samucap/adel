@@ -115,7 +115,7 @@ export function CategoryNav({ hideControls }: CategoryNavProps) {
                                     <ToggleGroupItem
                                         key={category.slug}
                                         value={category.slug}
-                                        className="rounded-full data-[state=on]:bg-muted data-[state=on]:text-foreground text-muted-foreground whitespace-nowrap px-4 h-8 text-sm font-medium transition-colors hover:text-foreground flex-shrink-0"
+                                        className="rounded-full data-[state=on]:bg-muted data-[state=on]:text-foreground text-muted-foreground whitespace-nowrap px-4 h-8 text-sm font-medium transition-colors hover:text-foreground shrink-0"
                                     >
                                         {category.label}
                                     </ToggleGroupItem>
@@ -126,7 +126,7 @@ export function CategoryNav({ hideControls }: CategoryNavProps) {
 
                     {/* Search - Fixed Width (only on /markets and if not hidden) */}
                     {pathname === "/markets" && !hideControls && (
-                        <div className="flex-shrink-0 w-64 md:w-72">
+                        <div className="shrink-0 w-64 md:w-72">
                             <div className="relative">
                                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                 <Input
@@ -157,7 +157,7 @@ export function CategoryNav({ hideControls }: CategoryNavProps) {
                                         <ToggleGroupItem
                                             key={`${subcat.slug}-sub-${index}`}
                                             value={subcat.slug}
-                                            className="rounded-full data-[state=on]:bg-muted data-[state=on]:text-foreground text-muted-foreground whitespace-nowrap px-4 h-8 text-sm font-medium transition-colors hover:text-foreground flex-shrink-0"
+                                            className="rounded-full data-[state=on]:bg-muted data-[state=on]:text-foreground text-muted-foreground whitespace-nowrap px-4 h-8 text-sm font-medium transition-colors hover:text-foreground shrink-0"
                                         >
                                             {subcat.label}
                                         </ToggleGroupItem>
@@ -168,7 +168,7 @@ export function CategoryNav({ hideControls }: CategoryNavProps) {
 
                         {/* Controls - Fixed (only on /markets and if not hidden) */}
                         {pathname === "/markets" && !hideControls && (
-                            <div className="flex items-center gap-2 flex-shrink-0">
+                            <div className="flex items-center gap-2 shrink-0">
                                 <Button
                                     variant={filterDrawerOpen ? "secondary" : "ghost"}
                                     size="sm"

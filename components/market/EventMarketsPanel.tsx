@@ -205,7 +205,7 @@ export function EventMarketsPanel({ conditionIds }: EventMarketsPanelProps = {})
                   {/* Outcome Name */}
                   <div className="col-span-3 flex items-center gap-2">
                     <div
-                      className="w-3 h-3 rounded-full flex-shrink-0"
+                      className="w-3 h-3 rounded-full shrink-0"
                       style={{ backgroundColor: CHART_COLORS_HEX[index % CHART_COLORS_HEX.length] }}
                     />
                     <div className="font-medium text-white line-clamp-2 text-sm flex-1">
@@ -409,7 +409,7 @@ export function EventMarketsPanel({ conditionIds }: EventMarketsPanelProps = {})
 
             {marketIntelligence.data && !marketIntelligence.loading && (
               <div className="bg-[#00F0FF]/10 border border-[#00F0FF]/20 rounded-xl p-5 relative shrink-0">
-                <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-[#00F0FF] to-[#39FF14] rounded-l-xl"></div>
+                <div className="absolute top-0 left-0 w-1 h-full bg-linear-to-b from-[#00F0FF] to-[#39FF14] rounded-l-xl"></div>
                 <p className="text-white text-sm leading-relaxed whitespace-pre-wrap">{marketIntelligence.data}</p>
               </div>
             )}

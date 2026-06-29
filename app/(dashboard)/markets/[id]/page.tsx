@@ -307,7 +307,7 @@ export default function MarketDetailPage() {
 
               {/* Event Markets Panel */}
               <motion.div
-                className="flex-[2] min-h-0 overflow-hidden"
+                className="flex-2 min-h-0 overflow-hidden"
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.3, duration: 0.3 }}

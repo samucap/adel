@@ -12,7 +12,7 @@ export default function RewardsPage() {
             </div>
 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-                <Card className="bg-gradient-to-br from-amber-500/10 to-amber-600/5 border-amber-500/20">
+                <Card className="bg-linear-to-br from-amber-500/10 to-amber-600/5 border-amber-500/20">
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                             <Trophy className="h-5 w-5 text-amber-500" />
@@ -25,7 +25,7 @@ export default function RewardsPage() {
                     </CardContent>
                 </Card>
 
-                <Card className="bg-gradient-to-br from-purple-500/10 to-purple-600/5 border-purple-500/20">
+                <Card className="bg-linear-to-br from-purple-500/10 to-purple-600/5 border-purple-500/20">
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                             <Gift className="h-5 w-5 text-purple-500" />

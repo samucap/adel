@@ -33,7 +33,7 @@ export function PollLayout({ event }: PollLayoutProps) {
                         <div
                             key={outcome.id ?? index}
                             className={cn(
-                                "flex-shrink-0 flex flex-col items-center gap-1 p-2 rounded-md border transition-all",
+                                "shrink-0 flex flex-col items-center gap-1 p-2 rounded-md border transition-all",
                                 "min-w-[80px] max-w-[90px]",
                                 isTop
                                     ? "border-primary/50 bg-primary/5"

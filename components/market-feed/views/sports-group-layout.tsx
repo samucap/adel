@@ -34,7 +34,7 @@ export function SportsGroupLayout({ event }: SportsGroupLayoutProps) {
                         <div
                             key={outcome.id ?? index}
                             className={cn(
-                                "flex-shrink-0 flex flex-col items-center gap-1 p-2 rounded-md border transition-all",
+                                "shrink-0 flex flex-col items-center gap-1 p-2 rounded-md border transition-all",
                                 "min-w-[85px] max-w-[95px]",
                                 isFavorite
                                     ? "border-green-500/50 bg-green-900/10 shadow-[0_0_10px_rgba(34,197,94,0.1)]"

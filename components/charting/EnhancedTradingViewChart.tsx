@@ -424,7 +424,7 @@ export function EnhancedTradingViewChart({
                 {tooltipData.entries.map((entry, index) => (
                   <div key={index} className="flex items-center gap-2 text-xs font-mono">
                     <div
-                      className="w-2 h-2 rounded-full flex-shrink-0"
+                      className="w-2 h-2 rounded-full shrink-0"
                       style={{ backgroundColor: entry.color }}
                     />
                     <span className="text-white truncate max-w-[80px] flex-1">

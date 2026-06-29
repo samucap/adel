@@ -99,7 +99,7 @@ export function EventCard({ event }: EventCardProps) {
             <div className="flex justify-between items-start gap-3">
               {/* Event Image */}
               {image && (
-                <div className="h-12 w-12 rounded-md overflow-hidden bg-muted flex-shrink-0 border border-white/10 group-hover:border-primary/30 transition-colors">
+                <div className="h-12 w-12 rounded-md overflow-hidden bg-muted shrink-0 border border-white/10 group-hover:border-primary/30 transition-colors">
                   <SafeImage
                     src={image}
                     alt={title}
