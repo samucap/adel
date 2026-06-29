@@ -84,7 +84,7 @@ export function TrendingMarketsPanel() {
 
                                 {/* Mini Sparkline */}
                                 <div className="w-24 h-12 self-center">
-                                    <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
+                                    <ResponsiveContainer width="100%" height="100%" initialDimension={{ width: 320, height: 200 }}>
                                         <LineChart data={market.sparklineData.map((val, i) => ({ i, val }))}>
                                             <Line
                                                 type="monotone"

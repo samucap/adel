@@ -3,20 +3,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
 
-// Suppress the notoriously annoying Recharts + React 18 strict mode warning
-if (typeof window !== "undefined") {
-  const originalWarn = console.warn;
-  console.warn = (...args) => {
-    if (
-      typeof args[0] === "string" &&
-      args[0].includes("The width(-1) and height(-1) of chart should be greater than 0")
-    ) {
-      return;
-    }
-    originalWarn(...args);
-  };
-}
-
 // Create a client
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(

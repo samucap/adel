@@ -51,7 +51,7 @@ export function RechartsChart({
   }, [outcomeOptions, visibleOutcomes]);
 
   return (
-    <ResponsiveContainer width="100%" height={height}>
+    <ResponsiveContainer width="100%" height="100%" initialDimension={{ width: 320, height: 200 }}>
       <LineChart data={mergedData}>
         <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.1} />
         <XAxis dataKey="time" tickFormatter={(t) => new Date(t).toLocaleTimeString()} />
