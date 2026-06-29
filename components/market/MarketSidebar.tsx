@@ -72,7 +72,7 @@ export function MarketSidebar() {
   return (
     <div className="w-full h-full bg-black border border-[#39FF14]/20 rounded-lg overflow-hidden flex flex-col">
       {/* Key Stats */}
-      <div className="p-4 border-b border-[#39FF14]/20 space-y-3 flex-shrink-0">
+      <div className="p-4 border-b border-[#39FF14]/20 space-y-3 shrink-0">
         <div className="flex items-center justify-between">
           <span className="text-sm text-[#00F0FF] font-mono">Current Price</span>
           <motion.span
@@ -111,7 +111,7 @@ export function MarketSidebar() {
       {/* Trading Interface */}
       <div className="flex-1 overflow-hidden">
         <Tabs defaultValue="orderbook" className="h-full flex flex-col">
-          <TabsList className="w-full border-b border-[#39FF14]/20 bg-transparent rounded-none h-auto p-0 flex-shrink-0">
+          <TabsList className="w-full border-b border-[#39FF14]/20 bg-transparent rounded-none h-auto p-0 shrink-0">
             <TabsTrigger
               value="orderbook"
               className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#00F0FF] data-[state=active]:text-[#00F0FF] px-4 py-2"

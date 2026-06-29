@@ -17,7 +17,8 @@ import {
   type UTCTimestamp,
   type IChartApi,
   type ISeriesApi,
-  type MouseEventParams
+  type MouseEventParams,
+  PriceScaleMode
 } from 'lightweight-charts'
 
 interface OutcomeOption {
@@ -31,6 +32,7 @@ interface OutcomeSeries {
   label: string
   color: string
   data: PricePoint[]
+  clobTokenId?: string // added for chart updates
 }
 
 interface TooltipEntry {
@@ -68,7 +70,7 @@ export function EnhancedTradingViewChart({
   const chartApiRef = useRef<{
     isRemoved: boolean
     api: IChartApi | null
-    seriesMap: Map<string, { series: ISeriesApi<'Line', any, any, any>, label: string, color: string, tokenId?: string }>
+    seriesMap: Map<string, { series: ISeriesApi<'Line', any, any, any>, label: string, color: string, clobTokenId?: string }>
   }>({
     isRemoved: false,
     api: null,
@@ -78,6 +80,7 @@ export function EnhancedTradingViewChart({
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [tooltipData, setTooltipData] = useState<TooltipData | null>(null)
+
 
   const { currMkt, selectedOutcome, chartInterval, setChartInterval } = useEventStore()
   const { isConnected, connectionStatus } = usePolymarketWebSocket()
@@ -91,16 +94,17 @@ export function EnhancedTradingViewChart({
     try {
       cleanupPrice = polymarketWS.onPriceUpdate((data) => {
         // Update the chart series if it exists in our series map
-        const seriesInfo = chartApiRef.current.seriesMap.get(data.tokenId)
-        if (seriesInfo?.series && data.price) {
+        const matchingInfo = Array.from(chartApiRef.current.seriesMap.values())
+          .find(info => info.clobTokenId === data.tokenId);
+        if (matchingInfo?.series && typeof data.price === 'number') {
           try {
             const newPoint = {
               time: Math.floor(Date.now() / 1000) as UTCTimestamp,
-              value: data.price
-            }
-            seriesInfo.series.update(newPoint)
+              value: data.price,
+            };
+            matchingInfo.series.update(newPoint);
           } catch (error) {
-            console.warn('Error updating chart series:', error)
+            console.warn('Error updating chart series:', error);
           }
         }
       })
@@ -149,13 +153,16 @@ export function EnhancedTradingViewChart({
       },
       rightPriceScale: {
         borderColor: "#1F1F1F",
-        scaleMargins: { top: 0.1, bottom: 0.1 },
-        mode: 0, // normal price scale
+        mode: PriceScaleMode.Normal,
       },
       timeScale: {
         borderColor: "#1F1F1F",
         timeVisible: true,
         secondsVisible: false,
+        tickMarkFormatter: (time: UTCTimestamp) => {
+          const date = new Date(time * 1000)
+          return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+        },
       },
       handleScroll: { vertTouchDrag: true },
     })
@@ -168,10 +175,10 @@ export function EnhancedTradingViewChart({
     // Set up crosshair tooltip
     chartApi.subscribeCrosshairMove((param: MouseEventParams) => {
       if (param.point === undefined ||
-          !param.time ||
-          param.point.x < 0 ||
-          param.point.y < 0 ||
-          !containerRef.current) {
+        !param.time ||
+        param.point.x < 0 ||
+        param.point.y < 0 ||
+        !containerRef.current) {
         setTooltipData(null)
         return
       }
@@ -209,85 +216,70 @@ export function EnhancedTradingViewChart({
 
   // Series reconciliation - add/remove LineSeries based on visibleOutcomes
   useEffect(() => {
-    if (!chartApiRef.current.api || chartApiRef.current.isRemoved) return
 
-    const chart = chartApiRef.current.api
-    const seriesMap = chartApiRef.current.seriesMap
-    const visibleSeries = outcomeSeries.filter(series => visibleOutcomes.has(series.id))
+    if (!chartApiRef.current.api || chartApiRef.current.isRemoved) return;
+
+    const chart = chartApiRef.current.api;
+    const seriesMap = chartApiRef.current.seriesMap;
+    const visibleSeries = outcomeSeries.filter(series => visibleOutcomes.has(series.id));
+
 
     // Remove series that are no longer visible
     for (const [seriesId, seriesInfo] of seriesMap.entries()) {
       if (!visibleSeries.find(s => s.id === seriesId)) {
+
         try {
           if (!chartApiRef.current.isRemoved) {
-            chart.removeSeries(seriesInfo.series)
+            chart.removeSeries(seriesInfo.series);
           }
-          seriesMap.delete(seriesId)
+          seriesMap.delete(seriesId);
         } catch (error) {
-          console.warn('Error removing series:', error)
+          console.warn('Error removing series:', error);
         }
       }
     }
 
     // Add or update visible series
     for (let i = 0; i < visibleSeries.length; i++) {
-      const series = visibleSeries[i]
-      const color = series.color // Use color from series data, not re-indexed
+      const series = visibleSeries[i];
+      const color = series.color; // Use color from series data, not re-indexed
 
-      let seriesInfo = seriesMap.get(series.id)
+      let seriesInfo = seriesMap.get(series.id);
 
-      if (!series.data || series.data.length === 0) continue
-
+      // Ensure seriesInfo exists
       if (!seriesInfo) {
-        // Create new series
+
         const lineSeries = chart.addSeries(LineSeries, {
           color,
           lineWidth: 2,
-          priceFormat: {
-            type: 'price' as const,
-            precision: 1,
-            minMove: 0.1,
-          },
-        })
-
-        // Set custom formatter for percentage display
-        lineSeries.applyOptions({
-          priceFormat: {
-            type: 'custom' as const,
-            formatter: (price: number) => `${(price * 100).toFixed(1)}%`,
-            minMove: 0.1,
-          },
-        })
-
-        seriesInfo = {
-          series: lineSeries,
-          label: series.label,
-          color,
-        }
-        seriesMap.set(series.id, seriesInfo)
+        });
+        seriesInfo = { series: lineSeries, label: series.label, color, clobTokenId: series.clobTokenId };
+        seriesMap.set(series.id, seriesInfo);
       }
 
-      // Transform PricePoint { t, p } to lightweight-charts { time, value }
-      const chartData = series.data.map(point => ({
+      // Transform data (handle missing data)
+      const chartData = (series.data || []).map(point => ({
         time: point.t as UTCTimestamp,
-        value: point.p,
-      }))
+        value: point.p * 100,
+      }));
 
       const uniqueChartData = chartData.filter((point, index, self) =>
         index === 0 || point.time !== self[index - 1].time
-      )
-      seriesInfo.series.setData(uniqueChartData)
+      );
+      // Ensure time is defined to avoid runtime errors in lightweight-charts
+      const safeChartData = uniqueChartData.filter(p => p.time !== undefined && p.time !== null);
+      seriesInfo.series.setData(safeChartData);
     }
 
     // Fit content to show all data
     if (visibleSeries.length > 0) {
       try {
-        chart.timeScale().fitContent()
+        chart.timeScale().fitContent();
       } catch (error) {
-        console.warn('Error fitting content:', error)
+        console.warn('Error fitting content:', error);
       }
     }
-  }, [outcomeSeries, visibleOutcomes])
+  }, [outcomeSeries, visibleOutcomes]);
 
   const toggleFullscreen = () => {
     setIsFullscreen(!isFullscreen)
@@ -296,7 +288,7 @@ export function EnhancedTradingViewChart({
   if (!currMkt) {
     return (
       <div className={`flex items-center justify-center border border-dashed border-muted-foreground/25 rounded-lg ${className}`}
-           style={{ height }}>
+        style={{ height }}>
         <div className="text-center text-muted-foreground">
           <BarChart3 className="w-12 h-12 mx-auto mb-4 opacity-50" />
           <p>Select a market to view chart</p>
@@ -314,7 +306,7 @@ export function EnhancedTradingViewChart({
       transition={{ duration: 0.3 }}
     >
       {/* Chart Header */}
-      <div className="flex items-center justify-between p-3 border-b border-[#39FF14]/20 bg-black/50">
+      <div className="flex items-center justify-between p-3 border-b border-[#39FF14]/20 bg-black/30 backdrop-blur-lg">
         <div className="flex items-center gap-3">
           {/* Outcome Toggle Pills */}
           <div className="flex items-center gap-1">
@@ -371,7 +363,7 @@ export function EnhancedTradingViewChart({
         <div className="flex items-center gap-2">
           {/* Timeframe Selector */}
           <div className="bg-muted/20 border border-border/50 rounded flex p-0.5 gap-0.5">
-            {['1h', '6h', '1d', '1w', 'max'].map((tf) => (
+            {['1h', '6h', '1d', '1w', '1m', 'max'].map((tf) => (
               <button
                 key={tf}
                 onClick={() => setChartInterval(tf)}
@@ -402,9 +394,9 @@ export function EnhancedTradingViewChart({
         <div
           ref={containerRef}
           className="flex-1 relative"
-          style={{ height: isFullscreen ? 'calc(100vh - 120px)' : height - 60 }}
-      >
-        {/* Loading Overlay */}
+          style={{ height: isFullscreen ? 'calc(100vh - 120px)' : height }}
+        >
+          {/* Loading Overlay */}
           {isLoading && (
             <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-10">
               <div className="text-[#00F0FF] font-mono flex items-center gap-2">
@@ -432,15 +424,13 @@ export function EnhancedTradingViewChart({
                 {tooltipData.entries.map((entry, index) => (
                   <div key={index} className="flex items-center gap-2 text-xs font-mono">
                     <div
-                      className="w-2 h-2 rounded-full flex-shrink-0"
+                      className="w-2 h-2 rounded-full shrink-0"
                       style={{ backgroundColor: entry.color }}
                     />
                     <span className="text-white truncate max-w-[80px] flex-1">
                       {entry.label}
                     </span>
-                    <span className="text-[#39FF14] font-bold">
-                      {(entry.value * 100).toFixed(1)}%
-                    </span>
+                    <span className="text-[#39FF14] font-bold">{entry.value.toFixed(1)}%</span>
                   </div>
                 ))}
               </div>

@@ -21,6 +21,11 @@ export function ParticleNetwork({
     speed = 0.2,
     className,
 }: ParticleNetworkProps) {
+    // Feature flag: disable on non-login routes
+    if (process.env.NEXT_PUBLIC_ENABLE_PARTICLES !== "true") {
+        return null;
+    }
+
     const containerRef = useRef<HTMLDivElement>(null)
 
     useEffect(() => {

@@ -103,9 +103,9 @@ export function SportsLayout({ event }: SportsLayoutProps) {
                 </div>
             ) : (
                 <div className="flex flex-col items-center gap-1 opacity-20">
-                    <div className="h-8 w-[1px] bg-white"></div>
+                    <div className="h-8 w-px bg-white"></div>
                     <span className="text-[10px] font-black italic">AT</span>
-                    <div className="h-8 w-[1px] bg-white"></div>
+                    <div className="h-8 w-px bg-white"></div>
                 </div>
             )}
 

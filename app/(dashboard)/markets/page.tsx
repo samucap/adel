@@ -1,20 +1,14 @@
 "use client"
 
-import React, { useEffect } from "react"
 import { CategoryNav } from "@/components/category-nav"
 import { MarketFeed } from "@/components/market-feed/market-feed"
-import { useAppStore } from "@/lib/store"
+import { useMarketStore } from "@/stores/marketStore"
 
 export default function MarketsPage() {
-    const { events, eventsLoading, eventsError, loadEvents } = useAppStore();
-
-    // Load all events on mount
-    useEffect(() => {
-        loadEvents();
-    }, [loadEvents]);
+    const { events, eventsLoading, eventsError } = useMarketStore();
 
     return (
-        <div className="relative min-h-screen">
+        <div className="min-h-screen">
             {/* Sticky Category/Filter Nav */}
             <div className="sticky top-0 z-30 bg-background/80 backdrop-blur-md border-b">
                 <div className="p-4 py-2">

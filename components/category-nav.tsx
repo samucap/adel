@@ -7,6 +7,7 @@ import {
 import { useState, useEffect } from "react"
 import { usePathname } from "next/navigation"
 import { useAppStore } from "@/lib/store"
+import { useMarketStore } from "@/stores/marketStore"
 import { Search, Filter, ArrowUpDown } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -33,7 +34,6 @@ export function CategoryNav({ hideControls }: CategoryNavProps) {
         topNav,
         topNavLoading,
         loadCats,
-        loadEvents,
         searchQuery,
         setSearchQuery,
         sortBy,
@@ -43,6 +43,7 @@ export function CategoryNav({ hideControls }: CategoryNavProps) {
         viewMode,
         setViewMode
     } = useAppStore()
+    const { loadEvents } = useMarketStore()
     const [selectedCategory, setSelectedCategory] = useState<string>("")
     const [selectedSubcat, setSelectedSubcat] = useState<string | null>(null)
     const [hasUserSelected, setHasUserSelected] = useState(false)
@@ -51,7 +52,7 @@ export function CategoryNav({ hideControls }: CategoryNavProps) {
     // Load categories on mount
     useEffect(() => {
         loadCats()
-    }, [loadCats])
+    }, [])
 
     // Set initial category when topNav loads (visual only, don't trigger loadEvents)
     useEffect(() => {
@@ -60,23 +61,21 @@ export function CategoryNav({ hideControls }: CategoryNavProps) {
         }
     }, [topNav, selectedCategory])
 
-    // Load events only when user explicitly selects a category
+    // Load events whenever the selected category or subcategory changes
     useEffect(() => {
-        if (!hasUserSelected) return
-
-        const selectedCatObj = topNav.find((cat) => cat.slug === selectedCategory)
-        if (!selectedCatObj) return
-
-        // If subcategory is selected, use its ID; otherwise use the category ID
+        if (!selectedCategory) return;
+        const selectedCatObj = topNav.find((cat) => cat.slug === selectedCategory);
+        if (!selectedCatObj) return;
         if (selectedSubcat) {
-            const subcatObj = selectedCatObj.related?.find((sub) => sub.slug === selectedSubcat)
+            const subcatObj = selectedCatObj.related?.find((sub) => sub.slug === selectedSubcat);
+            // TODO: Need to handle returning to previous category when subcat selected
             if (subcatObj) {
-                loadEvents(subcatObj.id)
+                loadEvents(subcatObj.id);
             }
         } else {
-            loadEvents(selectedCatObj.id)
+            loadEvents(selectedCatObj.id);
         }
-    }, [selectedCategory, selectedSubcat, topNav, loadEvents, hasUserSelected])
+    }, [selectedCategory, selectedSubcat]);
 
     const handleCategoryChange = (value: string) => {
         if (value) {
@@ -116,7 +115,7 @@ export function CategoryNav({ hideControls }: CategoryNavProps) {
                                     <ToggleGroupItem
                                         key={category.slug}
                                         value={category.slug}
-                                        className="rounded-full data-[state=on]:bg-muted data-[state=on]:text-foreground text-muted-foreground whitespace-nowrap px-4 h-8 text-sm font-medium transition-colors hover:text-foreground flex-shrink-0"
+                                        className="rounded-full data-[state=on]:bg-muted data-[state=on]:text-foreground text-muted-foreground whitespace-nowrap px-4 h-8 text-sm font-medium transition-colors hover:text-foreground shrink-0"
                                     >
                                         {category.label}
                                     </ToggleGroupItem>
@@ -127,7 +126,7 @@ export function CategoryNav({ hideControls }: CategoryNavProps) {
 
                     {/* Search - Fixed Width (only on /markets and if not hidden) */}
                     {pathname === "/markets" && !hideControls && (
-                        <div className="flex-shrink-0 w-64 md:w-72">
+                        <div className="shrink-0 w-64 md:w-72">
                             <div className="relative">
                                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                 <Input
@@ -158,7 +157,7 @@ export function CategoryNav({ hideControls }: CategoryNavProps) {
                                         <ToggleGroupItem
                                             key={`${subcat.slug}-sub-${index}`}
                                             value={subcat.slug}
-                                            className="rounded-full data-[state=on]:bg-muted data-[state=on]:text-foreground text-muted-foreground whitespace-nowrap px-4 h-8 text-sm font-medium transition-colors hover:text-foreground flex-shrink-0"
+                                            className="rounded-full data-[state=on]:bg-muted data-[state=on]:text-foreground text-muted-foreground whitespace-nowrap px-4 h-8 text-sm font-medium transition-colors hover:text-foreground shrink-0"
                                         >
                                             {subcat.label}
                                         </ToggleGroupItem>
@@ -169,7 +168,7 @@ export function CategoryNav({ hideControls }: CategoryNavProps) {
 
                         {/* Controls - Fixed (only on /markets and if not hidden) */}
                         {pathname === "/markets" && !hideControls && (
-                            <div className="flex items-center gap-2 flex-shrink-0">
+                            <div className="flex items-center gap-2 shrink-0">
                                 <Button
                                     variant={filterDrawerOpen ? "secondary" : "ghost"}
                                     size="sm"

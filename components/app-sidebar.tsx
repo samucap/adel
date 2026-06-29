@@ -39,7 +39,6 @@ import {
   Dices,
   ChartNetwork,
 } from "lucide-react";
-import { useStore } from "@/hooks/use-store";
 import { useAuthStore } from "@/stores/authStore";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -103,7 +102,7 @@ function SidebarPanel({
   pathname: string;
   onLogout: () => void;
 }) {
-  const { user } = useStore();
+  const { user } = useAuthStore();
   const [expandedItems, setExpandedItems] = React.useState<Record<string, boolean>>({
     Platform: true,
   });
@@ -206,7 +205,7 @@ function SidebarPanel({
                     {navData.user.name}
                   </p>
                   <p className="text-xs text-green-500 font-mono truncate">
-                    ${user.balance.toLocaleString()}
+                    ${navData.user.balance?.toLocaleString()}
                   </p>
                 </div>
               </button>
@@ -253,6 +252,7 @@ const defaultNavData = {
     name: "Trader 0x",
     email: "0x@polymarket.whales",
     avatar: "/avatar.png",
+    balance: "500",
   },
   topIcons: [
     { label: "Home", icon: Home01Icon, section: "home", href: "/" },
@@ -293,7 +293,6 @@ const defaultNavData = {
 export function AppSidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { user } = useStore();
   const authLogout = useAuthStore((s) => s.logout);
   const authUser = useAuthStore((s) => s.user);
   const [panelOpen, setPanelOpen] = React.useState(false);
@@ -446,7 +445,7 @@ export function AppSidebar() {
                         <ItemTitle>{navData.user.name}</ItemTitle>
                         <ItemDescription>
                           <span className="text-green-500 font-mono">
-                            ${user.balance.toLocaleString()}
+                            ${navData.user.balance?.toLocaleString()}
                           </span>
                         </ItemDescription>
                       </ItemContent>

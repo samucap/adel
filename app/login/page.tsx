@@ -20,7 +20,7 @@ import { Button } from "@/components/ui/button"
 import { ParticleNetwork } from "@/components/ui/particle-network"
 
 const loginSchema = z.object({
-    email: z.string().email("Please enter a valid email address"),
+    email: z.email("Please enter a valid email address"),
     password: z
         .string()
         .min(12, "Password must be at least 12 characters")
