@@ -7,6 +7,12 @@ export interface PricePoint {
     p: number; // price
 }
 
+export interface MultiPriceResponse {
+    history: {
+        [clobTokenId: string]: PricePoint[];
+    }
+}
+
 export interface OrderbookLevel {
     price: string;
     size: string;

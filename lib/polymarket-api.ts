@@ -6,6 +6,7 @@
 
 import type {
     PricePoint,
+    MultiPriceResponse,
     Orderbook,
     TopHoldersResponse,
 } from "@/types";
@@ -48,7 +49,25 @@ export async function fetchPriceHistory(
     const data = await fetchJSON<{ history: PricePoint[] }>(
         `${CLOB_API}/prices-history?market=${tokenId}&interval=${interval}&fidelity=${fidelity}`
     );
-    return data.history || [];
+    return data.history;
+}
+
+// ── Multi-Outcome Price History ───────────────────────────────
+export async function fetchMultiPriceHistory(
+    tokenIds: string[],
+    fidelity: number = 60,
+    interval: string = "max"
+): Promise<MultiPriceResponse> {
+    const data = await fetchJSON<MultiPriceResponse>(
+        `${CLOB_API}/batch-prices-history`, {
+        method: "POST",
+        body: JSON.stringify({
+            markets: tokenIds,
+            interval: interval,
+            fidelity: fidelity,
+        })
+    });
+    return data;
 }
 
 // ── Batch Orderbooks ─────────────────────────────────────────────

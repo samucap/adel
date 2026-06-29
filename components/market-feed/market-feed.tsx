@@ -1,5 +1,5 @@
 import React from 'react';
-import { useAppStore } from '@/lib/store';
+import { useUIStore } from '@/stores/uiStore';
 import { CleanEvent } from '@/types';
 import { EventCard } from './event-card';
 
@@ -11,7 +11,7 @@ interface MarketFeedProps {
 const MemoizedEventCard = React.memo(EventCard);
 
 export function MarketFeed({ events }: MarketFeedProps) {
-    const { viewMode } = useAppStore();
+    const { viewMode } = useUIStore();
 
     return (
         <div className="space-y-4">

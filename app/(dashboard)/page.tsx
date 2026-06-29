@@ -13,8 +13,6 @@ import { mockActivities, mockDashboardStats } from "@/lib/mock-data"
 import { BentoCard, BentoGrid } from "@/components/dashboard/bento-grid"
 import { DashboardPanelWrapper } from "@/components/dashboard/panel-wrapper"
 import { DashboardAlerts } from "@/components/dashboard/dashboard-alerts"
-import { useAppStore } from "@/lib/store"
-import { useEffect } from "react"
 import { Activity, DollarSign, Users, BarChart3, Coins, Layers } from "lucide-react"
 
 export default function DashboardPage() {

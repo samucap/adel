@@ -46,11 +46,20 @@ export default function MarketDetailPage() {
 
   // Get token IDs for all outcomes
   const outcomes = currEv?.displayData?.outcomes || [];
-  const { data: tokenMappings } = useMarketTokenIds(outcomes);
+  const tokenMappings = outcomes.map((outcome, i) => {
+    const clobTokenIds = JSON.parse(outcome.clobTokenIds) as string[];
+    return {
+      marketId: outcome.id || '',
+      conditionId: '',
+      clobTokenId: clobTokenIds[0] || '',
+      clobTokenIdNo: clobTokenIds[1] || '',
+      outcomeIndex: i,
+    };
+  });
 
   // Extract condition IDs for holders API
   const conditionIds = useMemo(
-    () => tokenMappings?.map((tm) => tm.conditionId).filter(Boolean) || [],
+    () => tokenMappings.map((tm) => tm.conditionId).filter(Boolean),
     [tokenMappings],
   );
 
@@ -61,13 +70,14 @@ export default function MarketDetailPage() {
         setOutcomeTokenId(mapping.marketId, mapping);
       });
     }
-  }, [tokenMappings, setOutcomeTokenId]);
+  }, [setOutcomeTokenId]);
 
   // Get price history for visible outcomes
   const visibleTokenMappings =
     tokenMappings?.filter((tm) => visibleOutcomes.has(tm.marketId)) || [];
-  const priceHistoryQueries = useMultiPriceHistory(
-    visibleTokenMappings,
+  const tokenIds = tokenMappings?.map(tm => tm.clobTokenId);
+  const multiPriceQuery = useMultiPriceHistory(
+    tokenIds.slice(0, 10),
     chartInterval,
   );
 
@@ -84,19 +94,21 @@ export default function MarketDetailPage() {
 
   // Build outcomeSeries (visible outcomes with price data)
   const outcomeSeries = useMemo(() => {
-    return priceHistoryQueries.map((query, idx) => {
-      const mapping = visibleTokenMappings[idx];
-      const data = query.data ?? [];
+    return visibleTokenMappings.map((mapping, idx) => {
+      const clobTokenId = mapping?.clobTokenId;
+      const data = (clobTokenId && multiPriceQuery.data?.history?.[clobTokenId])
+        ? multiPriceQuery.data.history[clobTokenId]
+        : [];
       const option = outcomeOptions.find((o) => o.id === mapping?.marketId);
       return {
         id: mapping?.marketId ?? "",
         label: option?.label ?? "",
         color: option?.color ?? CHART_COLORS_HEX[idx % CHART_COLORS_HEX.length],
         data,
-        clobTokenId: mapping?.clobTokenId ?? "",
+        clobTokenId: clobTokenId ?? "",
       };
     });
-  }, [priceHistoryQueries, visibleTokenMappings, outcomeOptions]);
+  }, [multiPriceQuery.data, visibleTokenMappings, outcomeOptions]);
 
   const handleRetry = () => {
     window.location.reload();

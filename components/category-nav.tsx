@@ -52,7 +52,7 @@ export function CategoryNav({ hideControls }: CategoryNavProps) {
     // Load categories on mount
     useEffect(() => {
         loadCats()
-    }, [loadCats])
+    }, [])
 
     // Set initial category when topNav loads (visual only, don't trigger loadEvents)
     useEffect(() => {
@@ -68,13 +68,14 @@ export function CategoryNav({ hideControls }: CategoryNavProps) {
         if (!selectedCatObj) return;
         if (selectedSubcat) {
             const subcatObj = selectedCatObj.related?.find((sub) => sub.slug === selectedSubcat);
+            // TODO: Need to handle returning to previous category when subcat selected
             if (subcatObj) {
                 loadEvents(subcatObj.id);
             }
         } else {
             loadEvents(selectedCatObj.id);
         }
-    }, [selectedCategory, selectedSubcat, topNav, loadEvents]);
+    }, [selectedCategory, selectedSubcat]);
 
     const handleCategoryChange = (value: string) => {
         if (value) {

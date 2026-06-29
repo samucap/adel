@@ -84,22 +84,16 @@ export const useEventStore = create<EventStoreState>((set, get) => ({
       : outcomes[0] || null;
 
     let visibleIds: Set<string>;
-    if (event.negRisk) {
-      // Multi-outcome: show top 4 candidates by probability
-      const TOP_N = 5;
-      const sorted = [...outcomes].sort(
-        (a, b) => (b.price || 0) - (a.price || 0),
-      );
-      visibleIds = new Set(
-        sorted
-          .slice(0, TOP_N)
-          .map((o) => o.id || "")
-          .filter(Boolean),
-      );
-    } else {
-      // Binary: show only primary market
-      visibleIds = new Set(primaryMarket?.id ? [primaryMarket.id] : []);
-    }
+    const TOP_N = 5;
+    const sorted = outcomes.sort(
+      (a, b) => (b.price || 0) - (a.price || 0),
+    );
+    visibleIds = new Set(
+      sorted
+        .slice(0, TOP_N)
+        .map((o) => o.id || "")
+        .filter(Boolean),
+    );
 
     set({
       currEv: event,

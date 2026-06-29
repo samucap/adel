@@ -43,9 +43,8 @@ export const useMarketStore = create<MarketState>()(subscribeWithSelector((set, 
     const activeCat = category || get().currCat;
     set({ eventsLoading: true, eventsError: null });
     try {
-      const { filters, sortBy, sortOrder } = get(); // UI store will sync these via combined calls if needed
       const catParam = activeCat !== "all" ? activeCat : undefined;
-      const events = await fetchEvents(catParam, filters, sortBy, sortOrder === "asc");
+      const events = await fetchEvents(catParam);
       set({ events, eventsLoading: false });
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : "Failed to load events";

@@ -214,7 +214,7 @@ export function EnhancedTradingViewChart({
     setIsLoading(false)
   }, [])
 
-// Series reconciliation - add/remove LineSeries based on visibleOutcomes
+  // Series reconciliation - add/remove LineSeries based on visibleOutcomes
   useEffect(() => {
 
     if (!chartApiRef.current.api || chartApiRef.current.isRemoved) return;
@@ -363,7 +363,7 @@ export function EnhancedTradingViewChart({
         <div className="flex items-center gap-2">
           {/* Timeframe Selector */}
           <div className="bg-muted/20 border border-border/50 rounded flex p-0.5 gap-0.5">
-            {['1h', '6h', '1d', '1w', 'max'].map((tf) => (
+            {['1h', '6h', '1d', '1w', '1m', 'max'].map((tf) => (
               <button
                 key={tf}
                 onClick={() => setChartInterval(tf)}
