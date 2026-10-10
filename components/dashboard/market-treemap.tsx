@@ -170,7 +170,7 @@ export function MarketTreemap() {
             <div className="flex-1 min-h-[300px] relative overflow-hidden rounded-xl border border-white/10 bg-black/20 backdrop-blur-sm">
                 {treemapData.length > 0 ? (
                     <div className="absolute inset-0">
-                        <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
+                        <ResponsiveContainer width="100%" height="100%" initialDimension={{ width: 320, height: 200 }}>
                             <Treemap
                                 data={treemapData}
                                 dataKey="value"

@@ -51,7 +51,7 @@ export function MarketChart({ data, type = "area" }: MarketChartProps) {
         return (
             <div className="relative h-full w-full min-h-[200px]">
                 <div className="absolute inset-0">
-                    <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
+                    <ResponsiveContainer width="100%" height="100%" initialDimension={{ width: 320, height: 200 }}>
                         <AreaChart data={data}>
                             <defs>
                                 <linearGradient id="colorYes" x1="0" y1="0" x2="0" y2="1">
@@ -109,7 +109,7 @@ export function MarketChart({ data, type = "area" }: MarketChartProps) {
     return (
         <div className="relative h-full w-full min-h-[200px]">
             <div className="absolute inset-0">
-                <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
+                <ResponsiveContainer width="100%" height="100%" initialDimension={{ width: 320, height: 200 }}>
                     <LineChart data={data}>
                         <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                         <XAxis

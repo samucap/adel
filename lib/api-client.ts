@@ -7,87 +7,87 @@
  * - Concurrent 401s share a single in-flight refresh (concurrency guard).
  */
 
-import { getAccessToken, useAuthStore } from "@/stores/authStore"
-import { AuthApiError } from "@/lib/auth-service"
+import { getAccessToken, useAuthStore } from "@/stores/authStore";
+import { AuthApiError } from "@/lib/auth-service";
 
-const REQUEST_TIMEOUT_MS = 10_000
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "/api"
+const REQUEST_TIMEOUT_MS = 10_000;
+const API_BASE = "/api";
 
-let refreshPromise: Promise<void> | null = null
+let refreshPromise: Promise<void> | null = null;
 
 async function doRefresh(): Promise<void> {
-    try {
-        await useAuthStore.getState().refreshSession()
-    } catch (err) {
-        if (err instanceof AuthApiError && err.status === 401) {
-            await useAuthStore.getState().logout()
-            if (typeof window !== "undefined") {
-                window.location.replace("/login")
-            }
-        }
-        throw err
+  try {
+    await useAuthStore.getState().refreshSession();
+  } catch (err) {
+    if (err instanceof AuthApiError && err.status === 401) {
+      await useAuthStore.getState().logout();
+      if (typeof window !== "undefined") {
+        window.location.replace("/login");
+      }
     }
+    throw err;
+  }
 }
 
 async function singleFlightRefresh(): Promise<void> {
-    if (!refreshPromise) {
-        refreshPromise = doRefresh().finally(() => {
-            refreshPromise = null
-        })
-    }
-    return refreshPromise
+  if (!refreshPromise) {
+    refreshPromise = doRefresh().finally(() => {
+      refreshPromise = null;
+    });
+  }
+  return refreshPromise;
 }
 
 async function rawFetch(url: string, init?: RequestInit): Promise<Response> {
-    const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
-    const token = getAccessToken()
-    const authHeaders: Record<string, string> = token
-        ? { Authorization: `Bearer ${token}` }
-        : {}
+  const token = getAccessToken();
+  const authHeaders: Record<string, string> = token
+    ? { Authorization: `Bearer ${token}` }
+    : {};
 
-    try {
-        return await fetch(url, {
-            ...init,
-            credentials: "include",
-            signal: controller.signal,
-            headers: {
-                "Content-Type": "application/json",
-                ...authHeaders,
-                ...init?.headers,
-            },
-        })
-    } finally {
-        clearTimeout(timeout)
-    }
+  try {
+    return await fetch(url, {
+      ...init,
+      credentials: "include",
+      signal: controller.signal,
+      headers: {
+        "Content-Type": "application/json",
+        ...authHeaders,
+        ...init?.headers,
+      },
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 /**
  * Fetch JSON from a protected API endpoint. Handles 401 → refresh → retry.
  */
 export async function apiFetch<T>(
-    path: string,
-    init?: RequestInit,
+  path: string,
+  init?: RequestInit,
 ): Promise<T> {
-    const url = `${API_BASE}${path}`
-    let res = await rawFetch(url, init)
+  const url = `${API_BASE}${path}`;
+  let res = await rawFetch(url, init);
 
-    if (res.status === 401) {
-        try {
-            await singleFlightRefresh()
-        } catch {
-            throw new Error(`API 401: Unauthorized`)
-        }
-
-        res = await rawFetch(url, init)
-
-        if (!res.ok) {
-            throw new Error(`API ${res.status}: ${res.statusText}`)
-        }
-    } else if (!res.ok) {
-        throw new Error(`API ${res.status}: ${res.statusText}`)
+  if (res.status === 401) {
+    try {
+      await singleFlightRefresh();
+    } catch {
+      throw new Error(`API 401: Unauthorized`);
     }
 
-    return res.json() as Promise<T>
+    res = await rawFetch(url, init);
+
+    if (!res.ok) {
+      throw new Error(`API ${res.status}: ${res.statusText}`);
+    }
+  } else if (!res.ok) {
+    throw new Error(`API ${res.status}: ${res.statusText}`);
+  }
+
+  return res.json() as Promise<T>;
 }

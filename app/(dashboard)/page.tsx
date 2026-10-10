@@ -14,11 +14,12 @@ import { BentoCard, BentoGrid } from "@/components/dashboard/bento-grid"
 import { DashboardPanelWrapper } from "@/components/dashboard/panel-wrapper"
 import { DashboardAlerts } from "@/components/dashboard/dashboard-alerts"
 import { Activity, DollarSign, Users, BarChart3, Coins, Layers } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 export default function DashboardPage() {
 
     return (
-        <div className="flex flex-col gap-4 p-3">
+        <div className={cn("flex w-full min-h-[100vh]")}>
             <DashboardAlerts />
 
             {/* Unified Masonry/Bento Grid */}
