@@ -22,8 +22,8 @@ export function PollLayout({ event }: PollLayoutProps) {
         .slice(0, 5);
 
     return (
-        <div className="flex flex-col gap-2 pt-2">
-            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+        <div className="flex flex-col gap-2">
+            <div className="scrollbar-hide flex gap-2 overflow-x-auto pb-1">
                 {topOutcomes.map((outcome, index) => {
                     const percent = Math.round(outcome.price * 100);
                     const isTop = index === 0;
@@ -33,28 +33,25 @@ export function PollLayout({ event }: PollLayoutProps) {
                         <div
                             key={outcome.id ?? index}
                             className={cn(
-                                "shrink-0 flex flex-col items-center gap-1 p-2 rounded-md border transition-all",
-                                "min-w-[80px] max-w-[90px]",
-                                isTop
-                                    ? "border-primary/50 bg-primary/5"
-                                    : "border-white/10 bg-white/5 hover:border-white/20"
+                                "flex w-22 shrink-0 flex-col items-center gap-1 rounded-md border p-2 transition-colors",
+                                isTop ? "border-primary/40 bg-selected" : "border-border bg-surface-raised hover:bg-hover"
                             )}
                         >
                             {/* Outcome Image */}
                             <div className={cn(
-                                "rounded-full overflow-hidden border flex items-center justify-center",
-                                isTop ? "h-8 w-8 border-primary/30" : "h-6 w-6 border-white/20"
+                                "flex items-center justify-center overflow-hidden rounded-full border",
+                                isTop ? "size-8 border-primary/40" : "size-6 border-border"
                             )}>
                                 {imgSrc ? (
                                     <SafeImage
                                         src={imgSrc}
                                         alt={outcome.label}
-                                        className="h-full w-full object-cover"
+                                        className="size-full object-cover"
                                     />
                                 ) : (
                                     <div className={cn(
-                                        "h-full w-full flex items-center justify-center text-[10px] font-bold uppercase",
-                                        isTop ? "bg-primary/20 text-primary" : "bg-white/10 text-muted-foreground"
+                                        "flex size-full items-center justify-center text-2xs font-bold uppercase",
+                                        isTop ? "bg-primary/12 text-primary" : "bg-muted text-muted-foreground"
                                     )}>
                                         {outcome.label.charAt(0)}
                                     </div>
@@ -63,22 +60,22 @@ export function PollLayout({ event }: PollLayoutProps) {
 
                             {/* Probability */}
                             <div className={cn(
-                                "text-center",
-                                isTop ? "text-sm font-bold text-primary" : "text-xs font-semibold"
+                                "text-center font-mono",
+                                isTop ? "text-sm font-bold text-primary" : "text-xs font-semibold text-foreground"
                             )}>
                                 {percent}%
                             </div>
 
                             {/* Label */}
                             <div className={cn(
-                                "text-center text-[9px] leading-tight line-clamp-2",
-                                isTop ? "text-foreground" : "text-muted-foreground"
+                                "line-clamp-2 text-center text-2xs leading-tight",
+                                isTop ? "text-primary" : "text-muted-foreground"
                             )}>
                                 {outcome.label}
                             </div>
 
                             {isTop && (
-                                <div className="px-1 py-0.5 bg-primary/20 text-primary text-[8px] font-bold uppercase tracking-wider rounded">
+                                <div className="rounded-sm bg-primary/12 px-1 py-0.5 text-2xs font-bold tracking-wider text-primary uppercase">
                                     Top
                                 </div>
                             )}
@@ -88,7 +85,7 @@ export function PollLayout({ event }: PollLayoutProps) {
             </div>
 
             {outcomes.length > 5 && (
-                <div className="flex justify-between items-center text-[9px] text-muted-foreground">
+                <div className="flex items-center justify-between text-2xs text-muted-foreground">
                     <span>{outcomes.length} total outcomes</span>
                     <span>Top 5 shown</span>
                 </div>

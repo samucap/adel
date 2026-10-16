@@ -16,7 +16,7 @@ export function CssParticles({ className }: CssParticleProps) {
       {particles.map((_, i) => (
         <motion.div
           key={i}
-          className="absolute h-2 w-2 rounded-full bg-[#DCF763] opacity-60"
+          className="absolute h-2 w-2 rounded-full bg-series-2 opacity-60"
           initial={{ opacity: 0, scale: 0.5, x: 0, y: 0 }}
           animate={{
             opacity: [0.3, 0.7, 0.3],

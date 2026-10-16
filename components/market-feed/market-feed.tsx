@@ -14,9 +14,9 @@ export function MarketFeed({ events }: MarketFeedProps) {
     const { viewMode } = useUIStore();
 
     return (
-        <div className="space-y-4">
+        <div className="flex flex-col gap-3">
             {viewMode === 'grid' ? (
-                <div className="grid gap-4 grid-cols-[repeat(auto-fill,minmax(320px,1fr))]">
+                <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,20rem),1fr))] gap-3">
                     {events.map(event => (
                         <MemoizedEventCard key={event.id} event={event} />
                     ))}
@@ -25,13 +25,13 @@ export function MarketFeed({ events }: MarketFeedProps) {
                 //TODO: add data table view
                 // table headers: Market (outcome.label|market.groupItemTitle), prices (yes in green/no in red prices),
                 // volume (clob), liquidity (clob), start date if now < start date, else timer for time remaining (endDate - now)
-                <div className="p-4 border rounded bg-muted/20 text-center">
+                <div className="rounded-lg border border-border bg-card p-4 text-center text-sm text-muted-foreground">
                     Table view temporarily unavailable during migration.
                 </div>
             )}
 
             {events.length === 0 && (
-                <div className="py-20 text-center text-muted-foreground">
+                <div className="py-20 text-center text-sm text-muted-foreground">
                     No markets found for this category.
                 </div>
             )}

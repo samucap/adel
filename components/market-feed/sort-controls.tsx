@@ -56,17 +56,17 @@ export function SortControls() {
                     variant="outline"
                     role="combobox"
                     aria-expanded={open}
-                    className="w-[180px] justify-between bg-black/40 border-white/10 text-muted-foreground hover:text-foreground text-xs h-8"
+                    className="h-8 w-32 justify-between sm:w-44 text-xs text-muted-foreground hover:text-foreground"
                 >
                     <span className="flex items-center gap-1.5 truncate">
-                        {sortBy && <OrderIcon className="h-3 w-3 shrink-0 text-primary" />}
+                        {sortBy && <OrderIcon className="size-3 shrink-0 text-primary" />}
                         {currentLabel}
                     </span>
-                    <ChevronsUpDown className="ml-1 h-3.5 w-3.5 shrink-0 opacity-50" />
+                    <ChevronsUpDown className="size-3.5 shrink-0 text-muted-foreground" />
                 </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-[180px] p-0 bg-black/90 border-white/10 backdrop-blur-xl">
-                <Command className="bg-transparent">
+            <PopoverContent className="w-44 p-0">
+                <Command>
                     <CommandInput placeholder="Search..." className="h-9 text-xs" />
                     <CommandList>
                         <CommandEmpty>No option found.</CommandEmpty>
@@ -78,20 +78,20 @@ export function SortControls() {
                                         key={option.value}
                                         value={option.value}
                                         onSelect={handleSortSelect}
-                                        className="aria-selected:bg-white/10 aria-selected:text-white text-xs"
+                                        className="text-xs"
                                     >
-                                        <div className="flex items-center justify-between w-full">
+                                        <div className="flex w-full items-center justify-between">
                                             <span className="flex items-center gap-1.5">
                                                 <Check
                                                     className={cn(
-                                                        "h-3.5 w-3.5",
+                                                        "size-3.5",
                                                         isActive ? "opacity-100" : "opacity-0"
                                                     )}
                                                 />
                                                 {option.label}
                                             </span>
                                             {isActive && (
-                                                <span className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                                                <span className="text-2xs tracking-wider text-muted-foreground uppercase">
                                                     {sortOrder === "asc" ? "↑ asc" : "↓ desc"}
                                                 </span>
                                             )}

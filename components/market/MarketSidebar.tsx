@@ -1,9 +1,11 @@
 "use client"
 
-import { useState } from "react"
-import { motion, AnimatePresence } from "framer-motion"
+import { memo, useEffect, useState } from "react"
+import { useQuery } from "@tanstack/react-query"
 import { useEventStore } from "@/stores/eventStore"
-import { useOrderbooks } from "@/lib/polymarket-hooks"
+import { fetchOrderbooks } from "@/lib/polymarket-api"
+import { applyDelta, applySnapshot, type Book } from "@/lib/orderbook"
+import { polymarketWS } from "@/lib/websocket-service"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -34,10 +36,43 @@ export function MarketSidebar() {
   // AI Comment Sentiment State
   const [commentSentiment, setCommentSentiment] = useState<{ loading: boolean, data: string | null, error: string | null }>({ loading: false, data: null, error: null })
 
-  // Get real orderbook data
-  const tokenIds = Array.from(currEv?.displayData.outcomes?.map(o => JSON.parse(o.clobTokenIds)) || []).flat()
-  const { data: orderbooks } = useOrderbooks(tokenIds)
-  const orderbook = orderbooks?.[0] || null
+  const tokenId = getCurrentMarketTokenId()
+  const bookQuery = useQuery({
+    queryKey: ["orderbook", tokenId],
+    queryFn: () => fetchOrderbooks([tokenId!]),
+    enabled: Boolean(tokenId),
+    staleTime: Infinity,
+    refetchOnWindowFocus: false,
+  })
+  const [book, setBook] = useState<Book | null>(null)
+
+  useEffect(() => {
+    setBook(null)
+    if (!tokenId) return
+
+    polymarketWS.connect()
+    polymarketWS.subscribeToMarket("", tokenId)
+    const offSnapshot = polymarketWS.onOrderbookUpdate((update) => {
+      if (update.tokenId !== tokenId) return
+      setBook(applySnapshot(update))
+    })
+    const offDelta = polymarketWS.onOrderbookDelta((delta) => {
+      if (delta.tokenId !== tokenId) return
+      setBook((prev) => (prev ? applyDelta(prev, delta) : prev))
+    })
+
+    return () => {
+      offSnapshot()
+      offDelta()
+      polymarketWS.unsubscribeFromMarket("", tokenId)
+    }
+  }, [tokenId])
+
+  useEffect(() => {
+    const snap = bookQuery.data?.[0]
+    if (!tokenId || !snap) return
+    setBook((prev) => prev ?? applySnapshot(snap))
+  }, [bookQuery.data, tokenId])
 
   // AI Sentiment Handler
   const handleGenerateSentiment = async () => {
@@ -61,47 +96,39 @@ export function MarketSidebar() {
 
   if (!currEv || !currMkt) {
     return (
-      <div className="w-full h-full bg-black border border-[#39FF14]/20 rounded-lg flex items-center justify-center">
-        <div className="text-center text-[#00F0FF] font-mono">
-          No market selected
-        </div>
+      <div className="flex h-40 items-center justify-center rounded-lg border border-border bg-card text-sm text-muted-foreground">
+        No market selected
       </div>
     )
   }
 
   return (
-    <div className="w-full h-full bg-black border border-[#39FF14]/20 rounded-lg overflow-hidden flex flex-col">
+    <div className="flex h-160 flex-col overflow-hidden rounded-lg border border-border bg-card">
       {/* Key Stats */}
-      <div className="p-4 border-b border-[#39FF14]/20 space-y-3 shrink-0">
+      <div className="flex shrink-0 flex-col gap-3 border-b border-border p-4">
         <div className="flex items-center justify-between">
-          <span className="text-sm text-[#00F0FF] font-mono">Current Price</span>
-          <motion.span
-            className="text-2xl font-mono font-bold text-[#39FF14]"
-            key={(currentPrice * 100).toFixed(1)}
-            initial={{ scale: 1.1 }}
-            animate={{ scale: 1 }}
-            transition={{ duration: 0.2 }}
-          >
+          <span className="text-sm text-muted-foreground">Current Price</span>
+          <span className="font-mono text-2xl font-bold text-foreground">
             {(currentPrice * 100).toFixed(1)}%
-          </motion.span>
+          </span>
         </div>
 
         <div className="grid grid-cols-2 gap-3 text-xs">
           <div className="space-y-1">
             <div className="flex items-center gap-1 text-muted-foreground">
-              <Activity className="w-3 h-3" />
+              <Activity className="size-3" />
               Volume 24h
             </div>
-            <div className="font-mono text-[#00F0FF]">
+            <div className="font-mono text-foreground">
               ${(volume24h / 1000000).toFixed(1)}M
             </div>
           </div>
           <div className="space-y-1">
             <div className="flex items-center gap-1 text-muted-foreground">
-              <DollarSign className="w-3 h-3" />
+              <DollarSign className="size-3" />
               Liquidity
             </div>
-            <div className="font-mono text-[#39FF14]">
+            <div className="font-mono text-foreground">
               ${(liquidity / 1000000).toFixed(1)}M
             </div>
           </div>
@@ -109,114 +136,71 @@ export function MarketSidebar() {
       </div>
 
       {/* Trading Interface */}
-      <div className="flex-1 overflow-hidden">
-        <Tabs defaultValue="orderbook" className="h-full flex flex-col">
-          <TabsList className="w-full border-b border-[#39FF14]/20 bg-transparent rounded-none h-auto p-0 shrink-0">
+      <div className="flex min-h-0 flex-1 flex-col">
+        <Tabs defaultValue="orderbook" className="flex min-h-0 flex-1 flex-col gap-0">
+          <TabsList className="h-auto w-full shrink-0 rounded-none border-b border-border bg-transparent p-0">
             <TabsTrigger
               value="orderbook"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#00F0FF] data-[state=active]:text-[#00F0FF] px-4 py-2"
+              className="rounded-none border-b-2 border-transparent px-4 py-2 data-[state=active]:border-primary data-[state=active]:text-primary"
             >
               Orderbook
             </TabsTrigger>
             <TabsTrigger
               value="comments"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#00F0FF] data-[state=active]:text-[#00F0FF] px-4 py-2"
+              className="rounded-none border-b-2 border-transparent px-4 py-2 data-[state=active]:border-primary data-[state=active]:text-primary"
             >
               Comments
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="orderbook" className="flex-1 overflow-hidden m-0">
-            <div className="p-4 h-full flex flex-col overflow-y-auto custom-scrollbar">
+          <TabsContent value="orderbook" className="m-0 flex min-h-0 flex-1 flex-col">
+            <div className="custom-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto p-4">
               {/* Orderbook Header */}
-              <div className="flex items-center justify-between mb-4">
-                <Badge variant="outline" className="text-xs border-[#00F0FF]/50 text-[#00F0FF]">
+              <div className="mb-3 flex items-center justify-between">
+                <Badge variant="outline" className="rounded-sm text-xs">
                   Live Orderbook
                 </Badge>
               </div>
 
               {/* Orderbook Content - Ladder Layout */}
-              {orderbook ? (
-                <div className="flex-1 flex flex-col">
-                  {/* Combined Orderbook - both asks and bids in descending order */}
-                  <div className="flex-1 space-y-1">
-                    {/* Asks (Sell Orders) - sorted descending (highest price first) */}
-                    {orderbook.asks
-                      .slice()
-                      .sort((a, b) => parseFloat(b.price) - parseFloat(a.price))
-                      .slice(0, 8)
-                      .map((ask, i) => (
-                        <OrderbookRow
-                          key={`ask-${i}`}
-                          price={ask.price}
-                          size={ask.size}
-                          type="ask"
-                        />
-                      ))}
-
-                    {/* Spread Indicator */}
-                    {orderbook.asks.length > 0 && orderbook.bids.length > 0 && (
-                      <div className="text-center py-1 border-y border-[#39FF14]/20 my-1">
-                        <div className="text-[10px] text-[#00F0FF] font-mono bg-black/50 px-2 py-0.5 rounded">
-                          Spread: {(() => {
-                            const bestAsk = Math.min(...orderbook.asks.map(a => parseFloat(a.price)))
-                            const bestBid = Math.max(...orderbook.bids.map(b => parseFloat(b.price)))
-                            const spread = ((bestAsk - bestBid) * 100).toFixed(1)
-                            return `${spread}¢`
-                          })()}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Bids (Buy Orders) - sorted descending (highest price first) */}
-                    {orderbook.bids
-                      .slice()
-                      .sort((a, b) => parseFloat(b.price) - parseFloat(a.price))
-                      .slice(0, 8)
-                      .map((bid, i) => (
-                        <OrderbookRow
-                          key={`bid-${i}`}
-                          price={bid.price}
-                          size={bid.size}
-                          type="bid"
-                        />
-                      ))}
-                  </div>
-                </div>
+              {book ? (
+                <OrderbookLadder book={book} />
               ) : (
                 <div className="flex-1 flex items-center justify-center">
                   <div className="text-center text-muted-foreground">
-                    <div className="text-xs font-mono">Loading orderbook...</div>
+                    <div className="text-xs font-mono">
+                      {bookQuery.isError ? "Orderbook unavailable" : "Loading orderbook..."}
+                    </div>
                   </div>
                 </div>
               )}
             </div>
 
             {/* Buy Buttons */}
-            <div className="p-4 border-t border-[#39FF14]/20 bg-[#141419] shrink-0">
-              <div className="flex gap-3">
-                <button className="flex-1 bg-[#39FF14] hover:bg-[#39FF14]/80 text-black font-bold py-3 rounded-lg shadow-[0_0_15px_rgba(57,255,20,0.3)] transition-all flex justify-center items-center gap-2">
-                  Buy YES <span className="bg-black/20 px-1.5 py-0.5 rounded text-[10px] tracking-wider">{currMkt ? (currMkt.price * 100).toFixed(1) : '0.0'}¢</span>
+            <div className="shrink-0 border-t border-border p-4">
+              <div className="flex gap-2">
+                <button className="focus-ring flex flex-1 items-center justify-center gap-2 rounded-md bg-positive py-2.5 font-bold text-primary-foreground transition-colors hover:bg-positive/80">
+                  Buy YES <span className="rounded-sm bg-background/20 px-1.5 py-0.5 font-mono text-2xs">{currMkt ? (currMkt.price * 100).toFixed(1) : '0.0'}¢</span>
                 </button>
-                <button className="flex-1 bg-[#FF4D00] hover:bg-[#FF4D00]/80 text-white font-bold py-3 rounded-lg shadow-[0_0_15px_rgba(255,77,0,0.3)] transition-all flex justify-center items-center gap-2">
-                  Buy NO <span className="bg-white/20 px-1.5 py-0.5 rounded text-[10px] tracking-wider">{currMkt ? ((1 - currMkt.price) * 100).toFixed(1) : '0.0'}¢</span>
+                <button className="focus-ring flex flex-1 items-center justify-center gap-2 rounded-md bg-negative py-2.5 font-bold text-primary-foreground transition-colors hover:bg-negative/80">
+                  Buy NO <span className="rounded-sm bg-background/20 px-1.5 py-0.5 font-mono text-2xs">{currMkt ? ((1 - currMkt.price) * 100).toFixed(1) : '0.0'}¢</span>
                 </button>
               </div>
             </div>
           </TabsContent>
 
-          <TabsContent value="comments" className="flex-1 overflow-hidden m-0">
-            <div className="flex-1 flex flex-col min-h-0 bg-[#141419]/30">
+          <TabsContent value="comments" className="m-0 flex min-h-0 flex-1 flex-col">
+            <div className="flex min-h-0 flex-1 flex-col">
 
               {/* AI Sentiment Action Bar */}
-              <div className="p-3 border-b border-[#39FF14]/20 bg-[#141419] flex items-center justify-between shrink-0">
+              <div className="flex shrink-0 items-center justify-between border-b border-border px-4 py-2">
                 <span className="text-xs text-muted-foreground flex items-center gap-2">
                   <MessageSquare size={14} /> Live Chatter
                 </span>
                 <button
                   onClick={handleGenerateSentiment}
                   disabled={commentSentiment.loading}
-                  className="bg-[#39FF14]/20 hover:bg-[#39FF14]/30 border border-[#39FF14]/50 text-[#39FF14] hover:text-white px-3 py-1.5 rounded text-[10px] font-bold transition-colors flex items-center gap-1.5 disabled:opacity-50"
+                  className="focus-ring flex items-center gap-1.5 rounded-md border border-primary/40 bg-primary/12 px-3 py-1.5 text-2xs font-bold text-primary transition-colors hover:bg-primary/20 disabled:opacity-50"
                 >
                   {commentSentiment.loading ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
                   ✨ Summarize Vibe
@@ -225,34 +209,34 @@ export function MarketSidebar() {
 
               {/* AI Sentiment Result Area */}
               {commentSentiment.loading && (
-                <div className="p-3 bg-[#39FF14]/20 border-b border-[#39FF14]/20 text-[#39FF14] text-xs flex items-center gap-2 shrink-0">
+                <div className="flex shrink-0 items-center gap-2 border-b border-border bg-primary/10 px-4 py-2 text-xs text-primary">
                   <Loader2 size={12} className="animate-spin" /> Analyzing crowd sentiment...
                 </div>
               )}
               {commentSentiment.data && !commentSentiment.loading && (
-                <div className="p-3 bg-[#39FF14]/20 border-b border-[#39FF14]/20 text-[#39FF14] text-xs shrink-0 flex items-start gap-2">
-                  <Bot size={14} className="mt-0.5 text-[#39FF14] shrink-0" />
+                <div className="flex shrink-0 items-start gap-2 border-b border-border bg-primary/10 px-4 py-2 text-xs text-primary">
+                  <Bot size={14} className="mt-0.5 shrink-0" />
                   <p className="leading-relaxed">{commentSentiment.data}</p>
                 </div>
               )}
 
-              <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
+              <div className="custom-scrollbar flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-4">
                 {mockComments.map((comment, i) => (
-                  <div key={i} className="bg-[#1a1a20] p-3 rounded-lg border border-[#39FF14]/10 shrink-0">
-                    <div className="flex justify-between items-center mb-2">
+                  <div key={i} className="shrink-0 rounded-md border border-border bg-surface-raised px-3 py-2">
+                    <div className="mb-1 flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <span className="font-bold text-[#00F0FF] text-xs">{comment.user}</span>
-                        {comment.hasPosition && <span className="bg-[#39FF14]/20 text-[#39FF14] text-[10px] px-1.5 py-0.5 rounded uppercase font-bold">Holder</span>}
+                        <span className="text-xs font-bold text-primary">{comment.user}</span>
+                        {comment.hasPosition && <span className="rounded-sm bg-positive/12 px-1.5 py-0.5 text-2xs font-bold text-positive uppercase">Holder</span>}
                       </div>
-                      <span className="text-[10px] text-muted-foreground">{comment.time}</span>
+                      <span className="text-2xs text-muted-foreground">{comment.time}</span>
                     </div>
-                    <p className="text-sm text-white">{comment.text}</p>
+                    <p className="text-sm text-foreground">{comment.text}</p>
                   </div>
                 ))}
               </div>
 
-              <div className="p-4 border-t border-[#39FF14]/20 bg-[#141419] shrink-0">
-                <input type="text" placeholder="Add a comment..." className="w-full bg-black border border-[#39FF14]/20 rounded-lg py-2.5 px-3 text-sm outline-none focus:border-[#00F0FF] transition-colors text-white" />
+              <div className="shrink-0 border-t border-border p-4">
+                <input type="text" placeholder="Add a comment..." className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground transition-colors outline-none focus:border-primary" />
               </div>
             </div>
           </TabsContent>
@@ -262,50 +246,95 @@ export function MarketSidebar() {
   )
 }
 
-// ── Orderbook Row Component ──────────────────────────────────────
-function OrderbookRow({
-  price,
-  size,
-  type,
-}: {
-  price: string;
-  size: string;
-  type: "bid" | "ask";
-}) {
-  const numPrice = parseFloat(price);
-  const numSize = parseFloat(size);
+const VISIBLE_LEVELS = 8
 
-  // Calculate max size from all visible orderbook entries for proper normalization
-  const maxSize = 10000; // Adjust based on typical order sizes
-  const barWidth = Math.min((numSize / maxSize) * 100, 100);
+function OrderbookLadder({ book }: { book: Book }) {
+  const asks = book.asks.slice(0, VISIBLE_LEVELS)
+  const bids = book.bids.slice(0, VISIBLE_LEVELS)
+  const maxSize = Math.max(1, ...asks.map((level) => level.size), ...bids.map((level) => level.size))
+  const bestAsk = asks[0]?.price
+  const bestBid = bids[0]?.price
+
+  if (asks.length === 0 && bids.length === 0) {
+    return (
+      <div className="flex flex-1 items-center justify-center text-xs font-mono text-muted-foreground">
+        No orders
+      </div>
+    )
+  }
 
   return (
-    <motion.div
-      className="flex items-center gap-2 text-[11px] font-mono relative py-1 px-2 rounded hover:bg-white/5 transition-colors"
-      whileHover={{ scale: 1.01 }}
-    >
+    <div className="flex flex-1 flex-col justify-end gap-0.5">
+      {/* Ascending in the DOM. Reversed so the best (lowest) ask sits on the spread. */}
+      <div className="flex flex-col-reverse gap-0.5">
+        {asks.map((level) => (
+          <OrderbookRow
+            key={level.price}
+            price={level.price}
+            size={level.size}
+            maxSize={maxSize}
+            type="ask"
+          />
+        ))}
+      </div>
+
+      {bestAsk !== undefined && bestBid !== undefined && (
+        <div className="my-1 border-y border-border py-1 text-center">
+          <div className="font-mono text-2xs text-muted-foreground">
+            Spread: {((bestAsk - bestBid) * 100).toFixed(1)}¢
+          </div>
+        </div>
+      )}
+
+      <div className="flex flex-col gap-0.5">
+        {bids.map((level) => (
+          <OrderbookRow
+            key={level.price}
+            price={level.price}
+            size={level.size}
+            maxSize={maxSize}
+            type="bid"
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+const OrderbookRow = memo(function OrderbookRow({
+  price,
+  size,
+  maxSize,
+  type,
+}: {
+  price: number
+  size: number
+  maxSize: number
+  type: "bid" | "ask"
+}) {
+  const barWidth = Math.min((size / maxSize) * 100, 100)
+
+  return (
+    <div className="relative flex items-center gap-2 rounded-sm px-2 py-1 font-mono text-xs transition-colors hover:bg-hover">
       {/* Depth bar background */}
       <div
         className={cn(
-          "absolute top-0 bottom-0 rounded-sm opacity-30",
-          type === "bid" ? "bg-[#39FF14] left-0" : "bg-[#FF4D00] right-0"
+          "absolute inset-y-0 rounded-sm",
+          type === "bid" ? "left-0 bg-positive/20" : "right-0 bg-negative/20"
         )}
-        style={{
-          width: `${barWidth}%`,
-          [type === "bid" ? "left" : "right"]: 0,
-        }}
+        style={{ width: `${barWidth}%` }}
       />
       <span
         className={cn(
-          "w-16 relative z-10 font-bold",
-          type === "bid" ? "text-[#39FF14]" : "text-[#FF4D00]"
+          "relative w-16 font-bold",
+          type === "bid" ? "text-positive" : "text-negative"
         )}
       >
-        {(numPrice * 100).toFixed(1)}¢
+        {(price * 100).toFixed(1)}¢
       </span>
-      <span className="flex-1 text-right relative z-10 text-white font-mono">
-        {numSize.toLocaleString()}
+      <span className="relative flex-1 text-right text-foreground">
+        {size.toLocaleString()}
       </span>
-    </motion.div>
-  );
-}
+    </div>
+  )
+})

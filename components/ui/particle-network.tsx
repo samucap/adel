@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react"
 import * as THREE from "three"
 import { cn } from "@/lib/utils"
+import { resolveColor } from "@/lib/tokens"
 
 interface ParticleNetworkProps {
     particleCount?: number
@@ -17,22 +18,19 @@ export function ParticleNetwork({
     particleCount = 160,
     minDistance = 120,
     maxConnections = 10,
-    color = "#DCF763",
+    color = "var(--series-2)",
     speed = 0.2,
     className,
 }: ParticleNetworkProps) {
-    // Feature flag: disable on non-login routes
-    if (process.env.NEXT_PUBLIC_ENABLE_PARTICLES !== "true") {
-        return null;
-    }
-
+    const enabled = process.env.NEXT_PUBLIC_ENABLE_PARTICLES === "true"
     const containerRef = useRef<HTMLDivElement>(null)
 
     useEffect(() => {
+        if (!enabled) return
         const container = containerRef.current
         if (!container) return
 
-        const threeColor = new THREE.Color(color)
+        const threeColor = new THREE.Color(resolveColor(color))
 
         // Renderer
         const renderer = new THREE.WebGLRenderer({
@@ -244,7 +242,9 @@ export function ParticleNetwork({
             linesMat.dispose()
             container.removeChild(renderer.domElement)
         }
-    }, [particleCount, minDistance, maxConnections, color, speed])
+    }, [enabled, particleCount, minDistance, maxConnections, color, speed])
+
+    if (!enabled) return null
 
     return (
         <div

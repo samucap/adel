@@ -12,10 +12,10 @@ export default function RewardsPage() {
             </div>
 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-                <Card className="bg-linear-to-br from-amber-500/10 to-amber-600/5 border-amber-500/20">
+                <Card className="border-warning/20 bg-warning/12">
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
-                            <Trophy className="h-5 w-5 text-amber-500" />
+                            <Trophy className="h-5 w-5 text-warning" />
                             Current Rank
                         </CardTitle>
                     </CardHeader>
@@ -25,23 +25,23 @@ export default function RewardsPage() {
                     </CardContent>
                 </Card>
 
-                <Card className="bg-linear-to-br from-purple-500/10 to-purple-600/5 border-purple-500/20">
+                <Card className="border-primary/20 bg-primary/12">
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
-                            <Gift className="h-5 w-5 text-purple-500" />
+                            <Gift className="h-5 w-5 text-primary" />
                             Pending Rewards
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="text-3xl font-bold font-mono">$1,250.00</div>
-                        <Button size="sm" className="mt-2 w-full bg-purple-500 hover:bg-purple-600">Claim</Button>
+                        <Button size="sm" className="mt-2 w-full">Claim</Button>
                     </CardContent>
                 </Card>
 
                 <Card>
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
-                            <Star className="h-5 w-5 text-yellow-400" />
+                            <Star className="h-5 w-5 text-warning" />
                             Points
                         </CardTitle>
                     </CardHeader>
@@ -54,7 +54,7 @@ export default function RewardsPage() {
                 <Card>
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
-                            <TrendingUp className="h-5 w-5 text-green-500" />
+                            <TrendingUp className="h-5 w-5 text-positive" />
                             Volume Tier
                         </CardTitle>
                     </CardHeader>
@@ -83,7 +83,7 @@ export default function RewardsPage() {
                                         <div className="text-xs text-muted-foreground">Yesterday</div>
                                     </div>
                                 </div>
-                                <div className="font-mono font-bold text-green-500">+150 pts</div>
+                                <div className="font-mono font-bold text-positive">+150 pts</div>
                             </div>
                         ))}
                     </div>

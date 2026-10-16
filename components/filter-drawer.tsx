@@ -37,8 +37,8 @@ function ChipGroup({
                     className={`
                         px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-150
                         ${selected === opt.value
-                            ? "bg-primary text-primary-foreground shadow-sm"
-                            : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
+                            ? "bg-selected text-primary"
+                            : "bg-muted/60 text-muted-foreground hover:bg-hover hover:text-foreground"
                         }
                     `}
                 >
@@ -60,7 +60,7 @@ function FilterSection({
     children: React.ReactNode
 }) {
     return (
-        <div className="rounded-lg border border-border/50 bg-card/50 p-3 space-y-2">
+        <div className="rounded-lg border border-border bg-card p-3 space-y-2">
             <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
                 <Icon className="h-3.5 w-3.5 text-muted-foreground" />
                 {label}
@@ -259,7 +259,7 @@ export function FilterDrawer({ open, onOpenChange }: FilterDrawerProps) {
     return (
         <Drawer open={open} onOpenChange={onOpenChange} direction="bottom">
             <DrawerContent className="max-h-[85vh] rounded-t-xl">
-                <DrawerHeader className="border-b border-border/50 pb-3">
+                <DrawerHeader className="border-b border-border pb-3">
                     <div className="flex items-center justify-between">
                         <DrawerTitle className="text-base font-semibold">Filters</DrawerTitle>
                         {activeCount > 0 && (
@@ -364,7 +364,7 @@ export function FilterDrawer({ open, onOpenChange }: FilterDrawerProps) {
                     </div>
                 </div>
 
-                <DrawerFooter className="border-t border-border/50 pt-3">
+                <DrawerFooter className="border-t border-border pt-3">
                     <Button
                         onClick={handleApply}
                         className="w-full h-11 text-sm font-semibold"
@@ -372,7 +372,7 @@ export function FilterDrawer({ open, onOpenChange }: FilterDrawerProps) {
                     >
                         Show Results
                         {activeCount > 0 && (
-                            <span className="ml-1.5 bg-primary-foreground/20 text-primary-foreground px-1.5 py-0.5 rounded text-[10px] font-bold">
+                            <span className="ml-1.5 bg-primary-foreground/20 text-primary-foreground px-1.5 py-0.5 rounded-sm text-2xs font-bold">
                                 {activeCount} filter{activeCount !== 1 ? "s" : ""}
                             </span>
                         )}

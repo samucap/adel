@@ -2,9 +2,9 @@
 
 import { useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
-import { motion } from "framer-motion"
 import { useEventStore } from "@/stores/eventStore"
 import { useTopHolders } from "@/lib/polymarket-hooks"
+import { formatEndLabel } from "@/lib/duration"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -24,7 +24,7 @@ import {
   Activity
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { CHART_COLORS_HEX } from "@/lib/chart-utils"
+import { seriesVar } from "@/lib/tokens"
 import { Outcome } from "@/types"
 
 interface EventMarketsPanelProps {
@@ -43,14 +43,12 @@ export function EventMarketsPanel({ conditionIds }: EventMarketsPanelProps = {})
   const [simplifiedRules, setSimplifiedRules] = useState<{ loading: boolean, data: string | null, error: string | null }>({ loading: false, data: null, error: null })
 
   const outcomes = useMemo(() => currEv?.displayData.outcomes || [], [currEv])
+  const { data: topHoldersData, isLoading: holdersLoading } = useTopHolders(conditionIds?.length ? conditionIds : [])
 
   if (!currEv) {
     router.push('/markets')
     return null
   }
-
-  // Get top holders data - only fetch if we have condition IDs
-  const { data: topHoldersData, isLoading: holdersLoading } = useTopHolders(conditionIds?.length ? conditionIds : [])
 
   const handleOutcomeSelect = (outcome: Outcome) => {
     setCurrentMarket(outcome)
@@ -126,10 +124,8 @@ export function EventMarketsPanel({ conditionIds }: EventMarketsPanelProps = {})
   // Safety check - don't render if no outcomes
   if (!outcomes || outcomes.length === 0) {
     return (
-      <div className="w-full h-full bg-black border border-[#39FF14]/20 rounded-lg flex items-center justify-center">
-        <div className="text-center text-[#00F0FF] font-mono">
-          <div className="text-sm">No market outcomes available</div>
-        </div>
+      <div className="flex h-40 items-center justify-center rounded-lg border border-border bg-card text-sm text-muted-foreground">
+        No market outcomes available
       </div>
     )
   }
@@ -137,44 +133,44 @@ export function EventMarketsPanel({ conditionIds }: EventMarketsPanelProps = {})
   
 
   return (
-    <div className="w-full h-full bg-black border border-[#39FF14]/20 rounded-lg overflow-hidden flex flex-col">
-      <Tabs defaultValue="markets" className="h-full flex flex-col">
-        <TabsList className="w-full border-b border-[#39FF14]/20 bg-transparent rounded-none h-auto p-0">
+    <div className="flex h-120 flex-col overflow-hidden rounded-lg border border-border bg-card">
+      <Tabs defaultValue="markets" className="flex min-h-0 flex-1 flex-col gap-0">
+        <TabsList className="w-full border-b border-border bg-transparent rounded-none h-auto p-0">
           <TabsTrigger
             value="markets"
-            className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#00F0FF] data-[state=active]:text-[#00F0FF] px-4 py-2"
+            className="rounded-none border-b-2 border-transparent px-4 py-2 data-[state=active]:border-primary data-[state=active]:text-primary"
           >
-            <BarChart3 className="w-4 h-4 mr-2" />
+            <BarChart3 className="size-4" />
             Markets
           </TabsTrigger>
           <TabsTrigger
             value="info"
-            className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#00F0FF] data-[state=active]:text-[#00F0FF] px-4 py-2"
+            className="rounded-none border-b-2 border-transparent px-4 py-2 data-[state=active]:border-primary data-[state=active]:text-primary"
           >
-            <Info className="w-4 h-4 mr-2" />
+            <Info className="size-4" />
             Event Info
           </TabsTrigger>
           <TabsTrigger
             value="holders"
-            className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#00F0FF] data-[state=active]:text-[#00F0FF] px-4 py-2"
+            className="rounded-none border-b-2 border-transparent px-4 py-2 data-[state=active]:border-primary data-[state=active]:text-primary"
           >
-            <Users className="w-4 h-4 mr-2" />
+            <Users className="size-4" />
             Top Holders
           </TabsTrigger>
           <TabsTrigger
             value="ai"
-            className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#00F0FF] data-[state=active]:text-[#00F0FF] px-4 py-2"
+            className="rounded-none border-b-2 border-transparent px-4 py-2 data-[state=active]:border-primary data-[state=active]:text-primary"
           >
-            <Sparkles className="w-4 h-4 mr-2" />
+            <Sparkles className="size-4" />
             AI Analysis
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="markets" className="flex-1 overflow-hidden m-0">
+        <TabsContent value="markets" className="m-0 min-h-0 flex-1 overflow-hidden">
           <div className="h-full overflow-y-auto custom-scrollbar">
             {/* Header */}
-            <div className="sticky top-0 bg-black/90 backdrop-blur-sm border-b border-[#39FF14]/20 p-4">
-              <div className="grid grid-cols-12 gap-2 text-xs font-mono text-[#00F0FF] font-medium">
+            <div className="sticky top-0 z-10 border-b border-border bg-card px-3 py-2">
+              <div className="grid grid-cols-12 gap-2 text-2xs font-medium tracking-wider text-muted-foreground uppercase">
                 <div className="col-span-3">Outcome</div>
                 <div className="col-span-2 text-center">Probability</div>
                 <div className="col-span-2 text-center">YES Price</div>
@@ -185,40 +181,33 @@ export function EventMarketsPanel({ conditionIds }: EventMarketsPanelProps = {})
             </div>
 
             {/* Markets Table */}
-            <div className="divide-y divide-[#39FF14]/10">
+            <div className="divide-y divide-border">
               {outcomes.map((outcome, index) => (
-                <motion.div
+                <div
                   key={`${outcome.id}-${index}`}
                   onClick={() => handleOutcomeSelect(outcome)}
                   className={cn(
-                    "grid grid-cols-12 gap-2 p-4 cursor-pointer transition-all duration-200 hover:bg-[#39FF14]/5",
+                    "grid cursor-pointer grid-cols-12 gap-2 border-l-2 px-3 py-2 transition-colors",
                     currMkt?.id === outcome.id
-                      ? "bg-[#39FF14]/10 border-l-4 border-[#39FF14]"
-                      : "hover:border-l-4 hover:border-[#39FF14]/50"
+                      ? "border-primary bg-selected"
+                      : "border-transparent hover:bg-hover"
                   )}
-                  whileHover={{ scale: 1.01 }}
-                  whileTap={{ scale: 0.99 }}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
                 >
                   {/* Outcome Name */}
                   <div className="col-span-3 flex items-center gap-2">
-                    <div
-                      className="w-3 h-3 rounded-full shrink-0"
-                      style={{ backgroundColor: CHART_COLORS_HEX[index % CHART_COLORS_HEX.length] }}
-                    />
-                    <div className="font-medium text-white line-clamp-2 text-sm flex-1">
+                    <span className="size-2.5 shrink-0 rounded-full" style={{ backgroundColor: seriesVar(index) }} />
+                    <div className={cn("line-clamp-2 flex-1 text-sm font-medium", currMkt?.id === outcome.id ? "text-primary" : "text-foreground")}>
                       {outcome.label}
                     </div>
                     <button
                       onClick={(e) => handleVisibilityToggle(outcome.id || "", e)}
-                      className="opacity-60 hover:opacity-100 transition-opacity p-1"
+                      aria-label="Toggle on chart"
+                      className="focus-ring rounded-sm p-1 text-muted-foreground hover:text-foreground"
                     >
                       {visibleOutcomes.has(outcome.id || "") ? (
-                        <Eye className="w-4 h-4 text-[#39FF14]" />
+                        <Eye className="size-4 text-primary" />
                       ) : (
-                        <EyeOff className="w-4 h-4 text-muted-foreground" />
+                        <EyeOff className="size-4" />
                       )}
                     </button>
                   </div>
@@ -227,7 +216,7 @@ export function EventMarketsPanel({ conditionIds }: EventMarketsPanelProps = {})
                   <div className="col-span-2 flex items-center justify-center">
                     <Badge
                       variant="outline"
-                      className="border-[#39FF14]/50 text-[#39FF14] font-mono"
+                      className="rounded-sm font-mono"
                     >
                       {(outcome.price * 100).toFixed(1)}%
                     </Badge>
@@ -235,21 +224,21 @@ export function EventMarketsPanel({ conditionIds }: EventMarketsPanelProps = {})
 
                   {/* YES Price */}
                   <div className="col-span-2 flex items-center justify-center">
-                    <div className="font-mono text-[#39FF14] text-sm">
+                    <div className="font-mono text-sm text-positive">
                       {(outcome.price * 100).toFixed(1)}¢
                     </div>
                   </div>
 
                   {/* NO Price */}
                   <div className="col-span-2 flex items-center justify-center">
-                    <div className="font-mono text-[#FF4D00] text-sm">
+                    <div className="font-mono text-sm text-negative">
                       {((1 - outcome.price) * 100).toFixed(1)}¢
                     </div>
                   </div>
 
                   {/* Volume 24h */}
                   <div className="col-span-2 flex items-center justify-center">
-                    <div className="font-mono text-[#00F0FF] text-xs">
+                    <div className="font-mono text-xs text-muted-foreground">
                       -
                     </div>
                   </div>
@@ -258,90 +247,90 @@ export function EventMarketsPanel({ conditionIds }: EventMarketsPanelProps = {})
                   <div className="col-span-1 flex items-center justify-center">
                     <span className="text-muted-foreground text-xs">-</span>
                   </div>
-                </motion.div>
+                </div>
               ))}
             </div>
 
             {outcomes.length === 0 && (
               <div className="p-8 text-center text-muted-foreground">
-                <BarChart3 className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                <BarChart3 className="mx-auto mb-3 size-10" />
                 <p>No market outcomes available</p>
               </div>
             )}
           </div>
         </TabsContent>
 
-        <TabsContent value="info" className="flex-1 overflow-hidden m-0">
-          <div className="p-6">
+        <TabsContent value="info" className="custom-scrollbar m-0 min-h-0 flex-1 overflow-y-auto">
+          <div className="p-4">
             <div className="flex justify-between items-start mb-4">
               <div>
                 <div className="flex items-center gap-2 mb-2">
-                  <Badge variant="outline" className="text-[#00F0FF] border-[#00F0FF]/50">
+                  <Badge variant="outline" className="rounded-sm">
                     {currEv?.layout || 'Market'}
                   </Badge>
-                  <Badge variant="outline" className="border-[#39FF14]/50 text-[#39FF14]">
+                  <Badge variant="outline" className="rounded-sm font-mono">
                     Vol: {currEv?.volume24hrClob ? `$${(currEv.volume24hrClob / 1000000).toFixed(1)}M` : '$0M'}
                   </Badge>
                 </div>
-                <h2 className="text-2xl font-bold text-white tracking-tight leading-tight">{currEv?.title}</h2>
+                <h2 className="text-xl leading-tight font-bold tracking-tight text-foreground">{currEv?.title}</h2>
               </div>
               <div className="text-right">
                 <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Resolves</div>
-                <div className="text-white font-semibold">
-                  {currEv?.endDate ? new Date(currEv.endDate).toLocaleDateString() : 'TBD'}
+                <div className="text-foreground font-semibold">
+                  {currEv?.endDate ? formatEndLabel(currEv.endDate) : "TBD"}
                 </div>
               </div>
             </div>
 
-            <p className="text-muted-foreground leading-relaxed mb-6">
+            <p className="text-muted-foreground leading-relaxed mb-4">
               {currEv?.description || 'This market will resolve to "Yes" if the referenced event completes according to standard resolution rules. Oracle sources will verify the final outcome at expiration.'}
             </p>
 
-            <div className="mb-6">
+            <div className="mb-4">
               <Button
                 onClick={handleSimplifyRules}
                 disabled={simplifiedRules.loading}
-                className="bg-[#39FF14]/20 hover:bg-[#39FF14]/30 border border-[#39FF14]/50 text-[#39FF14] hover:text-white px-4 py-2 rounded-lg text-xs font-bold transition-colors flex items-center gap-2 disabled:opacity-50 mb-3"
+                className="bg-primary/12 text-primary border border-primary/40 hover:bg-primary/20 px-4 py-2 rounded-md text-xs font-bold transition-colors flex items-center gap-2 disabled:opacity-50 mb-3"
               >
                 {simplifiedRules.loading ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
                 ✨ Simplify Rules with AI
               </Button>
               {simplifiedRules.data && !simplifiedRules.loading && (
-                <div className="bg-[#00F0FF]/10 border border-[#00F0FF]/20 rounded-lg p-4 flex items-start gap-3">
-                  <Bot size={18} className="text-[#00F0FF] shrink-0 mt-0.5" />
-                  <p className="text-[#00F0FF] text-sm leading-relaxed">{simplifiedRules.data}</p>
+                <div className="bg-primary/10 border border-primary/20 rounded-lg p-4 flex items-start gap-3">
+                  <Bot size={18} className="text-primary shrink-0 mt-0.5" />
+                  <p className="text-primary text-sm leading-relaxed">{simplifiedRules.data}</p>
                 </div>
               )}
             </div>
           </div>
         </TabsContent>
 
-        <TabsContent value="holders" className="flex-1 overflow-hidden m-0">
-          <div className="flex flex-col h-full">
-            <div className="sticky top-0 bg-black/90 backdrop-blur z-10 grid grid-cols-4 text-right text-[10px] uppercase font-bold tracking-wider text-muted-foreground px-6 py-2 border-b border-[#39FF14]/20 bg-[#141419]">
+        <TabsContent value="holders" className="m-0 min-h-0 flex-1 overflow-hidden">
+          <div className="flex h-full flex-col">
+            <div className="sticky top-0 z-10 grid grid-cols-4 border-b border-border bg-card px-3 py-2 text-right text-2xs font-medium tracking-wider text-muted-foreground uppercase">
               <div className="text-left">Wallet Address</div>
               <div>Position</div>
               <div>Shares Held</div>
               <div>Outcome</div>
             </div>
-            <div className="overflow-y-auto">
+            <div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto">
               {holdersLoading ? (
                 <div className="p-8 text-center text-muted-foreground">
-                  <div className="w-6 h-6 border-2 border-[#00F0FF]/30 border-t-[#00F0FF] rounded-full animate-spin mx-auto mb-4"></div>
+                  <div className="mx-auto mb-4 size-6 animate-spin rounded-full border-2 border-primary/30 border-t-primary" />
                   <p>Loading top holders...</p>
                 </div>
               ) : topHoldersData?.holders && topHoldersData.holders.length > 0 ? (
                 topHoldersData.holders.flatMap(metaHolder =>
                   metaHolder.holders.map((holder, i) => (
-                    <div key={`${metaHolder.token}-${i}`} className="grid grid-cols-4 text-right py-4 px-6 border-b border-[#39FF14]/10 hover:bg-[#39FF14]/5 text-sm transition-colors">
-                      <div className="text-left font-mono text-[#00F0FF] flex items-center gap-2">
+                    <div key={`${metaHolder.token}-${i}`} className="grid grid-cols-4 border-b border-border px-3 py-2 text-right text-sm transition-colors hover:bg-hover">
+                      <div className="text-left font-mono text-primary flex items-center gap-2">
                         <Users size={12} className="text-muted-foreground" />
                         {holder.proxyWallet.slice(0, 6)}...{holder.proxyWallet.slice(-4)}
                       </div>
-                      <div className="text-white font-medium">
+                      <div className="text-foreground font-medium">
                         {holder.outcomeIndex === 0 ? 'YES' : 'NO'}
                       </div>
-                      <div className="text-white font-medium">
+                      <div className="text-foreground font-medium">
                         {holder.amount.toLocaleString()}
                       </div>
                       <div className="text-muted-foreground">
@@ -359,7 +348,7 @@ export function EventMarketsPanel({ conditionIds }: EventMarketsPanelProps = {})
                       : "Market token data not loaded yet"}
                   </p>
                   {conditionIds && conditionIds.length === 0 && (
-                    <p className="text-xs mt-2 text-[#FF4D00]">
+                    <p className="text-xs mt-2 text-negative">
                       Token IDs required for holder data
                     </p>
                   )}
@@ -369,19 +358,19 @@ export function EventMarketsPanel({ conditionIds }: EventMarketsPanelProps = {})
           </div>
         </TabsContent>
 
-        <TabsContent value="ai" className="flex-1 overflow-hidden m-0">
-          <div className="flex flex-col h-full p-6 overflow-y-auto">
-            <div className="flex items-center justify-between mb-6 shrink-0">
+        <TabsContent value="ai" className="m-0 min-h-0 flex-1 overflow-hidden">
+          <div className="custom-scrollbar flex h-full flex-col overflow-y-auto p-4">
+            <div className="flex items-center justify-between mb-4 shrink-0">
               <div>
-                <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                  <Bot className="text-[#00F0FF]" size={20} /> Market Intelligence
+                <h3 className="text-base font-bold text-foreground flex items-center gap-2">
+                  <Bot className="text-primary" size={20} /> Market Intelligence
                 </h3>
                 <p className="text-xs text-muted-foreground mt-1">Powered by Gemini Pro Quant Model</p>
               </div>
               <Button
                 onClick={handleGenerateIntelligence}
                 disabled={marketIntelligence.loading}
-                className="bg-[#00F0FF]/20 hover:bg-[#00F0FF]/40 text-[#00F0FF] border border-[#00F0FF]/50 px-4 py-2 rounded-lg text-xs font-bold transition-colors flex items-center gap-2 disabled:opacity-50 shrink-0"
+                className="bg-primary/12 text-primary border border-primary/40 hover:bg-primary/20 px-4 py-2 rounded-md text-xs font-bold transition-colors flex items-center gap-2 disabled:opacity-50 shrink-0"
               >
                 {marketIntelligence.loading ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
                 {marketIntelligence.loading ? "Analyzing Tape..." : "✨ Generate Brief"}
@@ -389,35 +378,35 @@ export function EventMarketsPanel({ conditionIds }: EventMarketsPanelProps = {})
             </div>
 
             {marketIntelligence.loading && (
-              <div className="flex flex-col items-center justify-center py-8 text-muted-foreground animate-pulse border border-[#39FF14]/20 rounded-xl bg-[#141419] shrink-0">
-                <Bot size={32} className="mb-3 text-[#00F0FF]/50 opacity-50" />
+              <div className="flex flex-col items-center justify-center py-8 text-muted-foreground animate-pulse border border-border rounded-lg bg-surface-raised shrink-0">
+                <Bot size={32} className="mb-3 text-muted-foreground" />
                 <p>Processing order flow & sentiment...</p>
               </div>
             )}
 
             {!marketIntelligence.loading && !marketIntelligence.data && !marketIntelligence.error && (
-              <div className="flex items-center justify-center py-8 text-muted-foreground border border-[#39FF14]/20 border-dashed rounded-xl bg-[#141419]/50 shrink-0">
+              <div className="flex items-center justify-center py-8 text-muted-foreground border border-border border-dashed rounded-lg bg-surface-raised shrink-0">
                 <p>Click generate to analyze current market trajectory.</p>
               </div>
             )}
 
             {marketIntelligence.error && (
-              <div className="flex items-center justify-center py-8 text-[#FF4D00] border border-[#FF4D00]/20 rounded-xl bg-[#FF4D00]/5 shrink-0">
+              <div className="flex items-center justify-center py-8 text-negative border border-negative/20 rounded-lg bg-negative/5 shrink-0">
                 <p>{marketIntelligence.error}</p>
               </div>
             )}
 
             {marketIntelligence.data && !marketIntelligence.loading && (
-              <div className="bg-[#00F0FF]/10 border border-[#00F0FF]/20 rounded-xl p-5 relative shrink-0">
-                <div className="absolute top-0 left-0 w-1 h-full bg-linear-to-b from-[#00F0FF] to-[#39FF14] rounded-l-xl"></div>
-                <p className="text-white text-sm leading-relaxed whitespace-pre-wrap">{marketIntelligence.data}</p>
+              <div className="bg-primary/10 border border-primary/20 rounded-lg p-4 relative shrink-0">
+                <div className="absolute top-0 left-0 h-full w-1 rounded-l-lg bg-primary" />
+                <p className="text-foreground text-sm leading-relaxed whitespace-pre-wrap">{marketIntelligence.data}</p>
               </div>
             )}
 
             {/* AI Scenario Simulator */}
-            <div className="mt-8 border-t border-[#39FF14]/20 pt-6 shrink-0">
-              <h3 className="text-md font-bold text-white flex items-center gap-2 mb-4">
-                <Activity className="text-[#00F0FF]" size={18} /> ✨ AI Scenario Simulator
+            <div className="mt-4 border-t border-border pt-4 shrink-0">
+              <h3 className="text-base font-bold text-foreground flex items-center gap-2 mb-4">
+                <Activity className="text-primary" size={18} /> ✨ AI Scenario Simulator
               </h3>
               <p className="text-xs text-muted-foreground mb-3">Test a hypothetical news headline to see how the AI predicts market probability will react.</p>
 
@@ -427,35 +416,35 @@ export function EventMarketsPanel({ conditionIds }: EventMarketsPanelProps = {})
                   value={scenarioInput}
                   onChange={(e) => setScenarioInput(e.target.value)}
                   placeholder="e.g. CPI prints 0.5% higher than expected..."
-                  className="flex-1 bg-black border border-[#39FF14]/20 rounded-lg py-2 px-3 text-sm outline-none focus:border-[#00F0FF] transition-colors text-white"
+                  className="flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground transition-colors outline-none focus:border-primary"
                   onKeyDown={(e) => e.key === 'Enter' && handleSimulateScenario()}
                 />
                 <Button
                   onClick={handleSimulateScenario}
                   disabled={scenarioImpact.loading || !scenarioInput.trim()}
-                  className="bg-[#39FF14]/20 hover:bg-[#39FF14]/40 text-[#39FF14] border border-[#39FF14]/50 px-4 py-2 rounded-lg text-xs font-bold transition-colors flex items-center gap-2 disabled:opacity-50 shrink-0"
+                  className="bg-primary/12 text-primary border border-primary/40 hover:bg-primary/20 px-4 py-2 rounded-md text-xs font-bold transition-colors flex items-center gap-2 disabled:opacity-50 shrink-0"
                 >
                   {scenarioImpact.loading ? <Loader2 size={14} className="animate-spin" /> : "Simulate"}
                 </Button>
               </div>
 
               {scenarioImpact.loading && (
-                <div className="p-4 flex items-center gap-3 text-muted-foreground animate-pulse border border-[#39FF14]/20 rounded-xl bg-[#141419]">
-                  <Bot size={20} className="text-[#00F0FF]/50 opacity-50" />
+                <div className="p-4 flex items-center gap-3 text-muted-foreground animate-pulse border border-border rounded-lg bg-surface-raised">
+                  <Bot size={20} className="text-muted-foreground" />
                   <span className="text-xs">Simulating market impact...</span>
                 </div>
               )}
 
               {scenarioImpact.error && (
-                <div className="p-4 text-[#FF4D00] border border-[#FF4D00]/20 rounded-xl bg-[#FF4D00]/5 text-xs">
+                <div className="p-4 text-negative border border-negative/20 rounded-lg bg-negative/5 text-xs">
                   {scenarioImpact.error}
                 </div>
               )}
 
               {scenarioImpact.data && !scenarioImpact.loading && (
-                <div className="bg-[#39FF14]/10 border border-[#39FF14]/20 rounded-xl p-4 flex items-start gap-3">
-                  <Bot size={18} className="text-[#39FF14] shrink-0 mt-0.5" />
-                  <p className="text-[#39FF14] text-sm leading-relaxed">{scenarioImpact.data}</p>
+                <div className="bg-primary/10 border border-border rounded-lg p-4 flex items-start gap-3">
+                  <Bot size={18} className="text-primary shrink-0 mt-0.5" />
+                  <p className="text-primary text-sm leading-relaxed">{scenarioImpact.data}</p>
                 </div>
               )}
             </div>

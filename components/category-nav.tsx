@@ -20,6 +20,9 @@ import { FilterDrawer } from "./filter-drawer";
 import { SortControls } from "./market-feed/sort-controls";
 import { LayoutGrid, List } from "lucide-react";
 
+const pillClass =
+  "rounded-full px-3 text-sm text-muted-foreground hover:bg-hover hover:text-foreground data-[state=on]:bg-selected data-[state=on]:text-primary";
+
 interface CategoryNavProps {
   hideControls?: boolean;
 }
@@ -96,11 +99,11 @@ export function CategoryNav({ hideControls }: CategoryNavProps) {
 
   return (
     <>
-      <div className="flex flex-col gap-2 mb-4">
+      <div className="flex flex-col gap-2">
         {/* Row 1: Categories + Search */}
-        <div className="flex items-center gap-4 justify-between">
+        <div className="flex items-center justify-between gap-3">
           {/* Categories - Scrollable */}
-          <div className="flex-1 min-w-0 overflow-hidden">
+          <div className="min-w-0 flex-1 overflow-hidden">
             {topNavLoading ? (
               <div className="text-sm text-muted-foreground">
                 Loading categories...
@@ -108,15 +111,16 @@ export function CategoryNav({ hideControls }: CategoryNavProps) {
             ) : (
               <ToggleGroup
                 type="single"
+                spacing={1}
                 value={selectedCategory}
                 onValueChange={handleCategoryChange}
-                className="justify-start w-full overflow-x-auto no-scrollbar"
+                className="scrollbar-hide w-full justify-start overflow-x-auto"
               >
                 {topNav.map((category) => (
                   <ToggleGroupItem
                     key={category.slug}
                     value={category.slug}
-                    className="rounded-full data-[state=on]:bg-muted data-[state=on]:text-foreground text-muted-foreground whitespace-nowrap px-4 h-8 text-sm font-medium transition-colors hover:text-foreground shrink-0"
+                    className={pillClass}
                   >
                     {category.label}
                   </ToggleGroupItem>
@@ -127,15 +131,15 @@ export function CategoryNav({ hideControls }: CategoryNavProps) {
 
           {/* Search - Fixed Width (only on /markets and if not hidden) */}
           {pathname === "/markets" && !hideControls && (
-            <div className="shrink-0 w-64 md:w-72">
+            <div className="w-40 shrink-0 sm:w-64 md:w-72">
               <div className="relative">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   type="search"
                   placeholder="Search..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="h-8 pl-8 text-sm bg-muted/50 border-border/50 transition-colors focus:bg-background"
+                  className="h-8 pl-8 text-sm"
                 />
               </div>
             </div>
@@ -145,15 +149,16 @@ export function CategoryNav({ hideControls }: CategoryNavProps) {
         {/* Row 2: Subcategories + Controls */}
         {(selectedCat?.related && selectedCat.related.length > 0) ||
         (pathname === "/markets" && !hideControls) ? (
-          <div className="flex items-center gap-4 justify-between min-h-[36px]">
+          <div className="flex min-h-9 items-center justify-between gap-3">
             {/* Subcategories - Scrollable */}
-            <div className="flex-1 min-w-0 overflow-hidden">
+            <div className="min-w-0 flex-1 overflow-hidden">
               {selectedCat?.related && selectedCat.related.length > 0 && (
                 <ToggleGroup
                   type="single"
+                  spacing={1}
                   value={selectedSubcat || ""}
                   onValueChange={handleSubcatChange}
-                  className="justify-start w-full overflow-x-auto no-scrollbar"
+                  className="scrollbar-hide w-full justify-start overflow-x-auto"
                 >
                   {subcats
                     ?.filter((subcat) => subcat.slug)
@@ -161,7 +166,7 @@ export function CategoryNav({ hideControls }: CategoryNavProps) {
                       <ToggleGroupItem
                         key={`${subcat.slug}-sub-${index}`}
                         value={subcat.slug}
-                        className="rounded-full data-[state=on]:bg-muted data-[state=on]:text-foreground text-muted-foreground whitespace-nowrap px-4 h-8 text-sm font-medium transition-colors hover:text-foreground shrink-0"
+                        className={pillClass}
                       >
                         {subcat.label}
                       </ToggleGroupItem>
@@ -172,35 +177,38 @@ export function CategoryNav({ hideControls }: CategoryNavProps) {
 
             {/* Controls - Fixed (only on /markets and if not hidden) */}
             {pathname === "/markets" && !hideControls && (
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="flex shrink-0 items-center gap-2">
                 <Button
                   variant={filterDrawerOpen ? "secondary" : "ghost"}
                   size="sm"
                   onClick={() => setFilterDrawerOpen(true)}
                   className="h-8 px-2 text-xs"
+                  aria-label="Filters"
                 >
-                  <Filter className="h-3.5 w-3.5 mr-1" />
-                  Filters
+                  <Filter className="size-3.5" />
+                  <span className="hidden sm:inline">Filters</span>
                 </Button>
 
                 <SortControls />
 
-                <div className="flex bg-muted p-1 rounded-lg ml-2">
+                <div className="flex gap-1 rounded-md bg-muted p-0.5">
                   <Button
                     variant={viewMode === "grid" ? "secondary" : "ghost"}
                     size="sm"
-                    className="h-7 w-7 p-0"
+                    className="size-7 p-0"
+                    aria-label="Grid view"
                     onClick={() => setViewMode("grid")}
                   >
-                    <LayoutGrid className="h-3.5 w-3.5" />
+                    <LayoutGrid className="size-3.5" />
                   </Button>
                   <Button
                     variant={viewMode === "table" ? "secondary" : "ghost"}
                     size="sm"
-                    className="h-7 w-7 p-0"
+                    className="size-7 p-0"
+                    aria-label="Table view"
                     onClick={() => setViewMode("table")}
                   >
-                    <List className="h-3.5 w-3.5" />
+                    <List className="size-3.5" />
                   </Button>
                 </div>
               </div>

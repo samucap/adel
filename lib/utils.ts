@@ -26,9 +26,3 @@ export function formatCurrency(value: number, currency: string) {
   }).format(value)}`
 }
 
-export function formatTimeRemaining(timeRemaining: number) {
-  const hours = Math.floor(timeRemaining / 3600000);
-  const minutes = Math.floor((timeRemaining % 3600000) / 60000);
-  const seconds = Math.floor((timeRemaining % 60000) / 1000);
-  return `${hours}h ${minutes}m ${seconds}s`;
-}

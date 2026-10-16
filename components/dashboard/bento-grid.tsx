@@ -56,16 +56,8 @@ export function BentoGrid({ children, className, cols = 4 }: BentoGridProps) {
 
 export function BentoCard({ children, className, size = "base" }: BentoCardProps) {
     return (
-        <div
-            className={cn(
-                "border rounded-xl group/bento shadow-input dark:shadow-none bg-background/50 border-border/50 flex flex-col overflow-hidden transition-all hover:border-border/80 hover:shadow-lg",
-                sizeClasses[size],
-                className
-            )}
-        >
-            <div className="h-full w-full flex flex-col">
-                {children}
-            </div>
+        <div className={cn("flex min-w-0 flex-col", sizeClasses[size], className)}>
+            {children}
         </div>
     );
 }

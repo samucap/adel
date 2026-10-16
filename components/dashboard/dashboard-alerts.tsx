@@ -15,9 +15,6 @@ export function DashboardAlerts() {
     useEffect(() => {
         if (error) {
             setVisible(true)
-            // Auto-dismiss after 10 seconds? Optional.
-            // const timer = setTimeout(() => setVisible(false), 10000)
-            // return () => clearTimeout(timer)
         } else {
             setVisible(false)
         }
@@ -26,15 +23,15 @@ export function DashboardAlerts() {
     if (!visible || !error) return null
 
     return (
-        <div className="fixed bottom-4 right-4 z-50 w-full max-w-md animate-in slide-in-from-bottom-5 fade-in">
-            <Alert variant="destructive" className="bg-destructive/10 border-destructive/20 text-destructive-foreground backdrop-blur-md shadow-lg">
-                <AlertCircle className="h-4 w-4" />
+        <div className="fixed right-4 bottom-4 z-50 w-full max-w-md animate-in fade-in slide-in-from-bottom-5">
+            <Alert variant="destructive" className="border-negative/40 shadow-lg">
+                <AlertCircle className="size-4" />
                 <AlertTitle>Connection Issue</AlertTitle>
-                <AlertDescription className="flex justify-between items-center gap-2">
+                <AlertDescription className="flex items-center justify-between gap-2">
                     <span>{error}</span>
                     <button
                         onClick={() => setVisible(false)}
-                        className="text-xs font-bold uppercase hover:underline opacity-80"
+                        className="focus-ring rounded-sm text-xs font-semibold uppercase hover:underline"
                     >
                         Dismiss
                     </button>

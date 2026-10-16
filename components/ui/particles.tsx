@@ -8,6 +8,7 @@ import React, {
 } from "react"
 
 import { cn } from "@/lib/utils"
+import { resolveColor } from "@/lib/tokens"
 
 interface MousePosition {
   x: number
@@ -47,23 +48,6 @@ interface ParticlesProps extends ComponentPropsWithoutRef<"div"> {
   vy?: number
 }
 
-function hexToRgb(hex: string): number[] {
-  hex = hex.replace("#", "")
-
-  if (hex.length === 3) {
-    hex = hex
-      .split("")
-      .map((char) => char + char)
-      .join("")
-  }
-
-  const hexInt = parseInt(hex, 16)
-  const red = (hexInt >> 16) & 255
-  const green = (hexInt >> 8) & 255
-  const blue = hexInt & 255
-  return [red, green, blue]
-}
-
 type Circle = {
   x: number
   y: number
@@ -84,7 +68,7 @@ export const Particles: React.FC<ParticlesProps> = ({
   ease = 50,
   size = 0.4,
   refresh = false,
-  color = "#ffffff",
+  color = "var(--text)",
   vx = 0,
   vy = 0,
   ...props
@@ -201,7 +185,7 @@ export const Particles: React.FC<ParticlesProps> = ({
     }
   }
 
-  const rgb = hexToRgb(color)
+  const fill = resolveColor(color)
 
   const drawCircle = (circle: Circle, update = false) => {
     if (context.current) {
@@ -209,8 +193,10 @@ export const Particles: React.FC<ParticlesProps> = ({
       context.current.translate(translateX, translateY)
       context.current.beginPath()
       context.current.arc(x, y, size, 0, 2 * Math.PI)
-      context.current.fillStyle = `rgba(${rgb.join(", ")}, ${alpha})`
+      context.current.fillStyle = fill
+      context.current.globalAlpha = alpha
       context.current.fill()
+      context.current.globalAlpha = 1
       context.current.setTransform(dpr, 0, 0, dpr, 0, 0)
 
       if (!update) {

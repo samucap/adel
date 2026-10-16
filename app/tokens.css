@@ -1,0 +1,114 @@
+/*
+ * Design tokens: the only place colors, fonts, radii and type sizes are defined.
+ * The app is dark-only (<html class="dark">), so tokens live on :root.
+ *
+ * Utility names follow shadcn conventions:
+ *   accent role  -> bg-primary / text-primary / ring-ring
+ *   hover state  -> bg-accent (shadcn's "accent" is its hover tint) or bg-hover
+ *   text / muted -> text-foreground / text-muted-foreground
+ *
+ * Spacing: Tailwind's 4px base. Allowed steps: 0.5 1 1.5 2 3 4 6 8 12.
+ *   page gutter p-4 (shell only) · panel header px-4 py-3 · panel body p-4
+ *   row px-3 py-2 · gap-3 between panels/cards · gap-2 inline
+ *
+ * State rules:
+ *   hover     bg-hover (text 5%), text -> foreground; clickable cards: border-primary/40
+ *   pressed   bg-pressed (text 10%)
+ *   selected  bg-selected (accent 12%) + text-primary; rows/nav add a 2px primary left bar;
+ *             tabs use a 2px primary underline + text-primary
+ *   focus     focus-visible:ring-2 ring-ring ring-offset-2 ring-offset-background
+ *   disabled  opacity-50, no hover change
+ *   positive/negative: full color for text, /12 for chip/button fills, /20 for depth bars,
+ *             solid fills use text-on-accent
+ */
+
+:root {
+  /* Color roles */
+  --background: #0a0a0a;
+  --surface: #141414;
+  --surface-raised: #1f1f1f;
+  --border: #333333;
+  --text: #e0e0e0;
+  --muted: #888888;
+  --accent: #00f0ff;
+  --on-accent: #0a0a0a;
+  --positive: #39ff14;
+  --negative: #ff4d00;
+  --warning: #fbbf24;
+
+  /* State tints */
+  --hover: color-mix(in oklab, var(--text) 5%, transparent);
+  --pressed: color-mix(in oklab, var(--text) 10%, transparent);
+  --selected: color-mix(in oklab, var(--accent) 12%, transparent);
+
+  /* Chart series: outcome lines only, never direction */
+  --series-1: #00f0ff;
+  --series-2: #dcf763;
+  --series-3: #c084fc;
+  --series-4: #ff8fa3;
+  --series-5: #a0acad;
+
+  --radius: 0.5rem;
+}
+
+@theme inline {
+  --font-sans: var(--font-ubuntu), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
+
+  --text-2xs: 0.625rem;
+  --text-2xs--line-height: 0.875rem;
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+
+  /* Roles */
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-border: var(--border);
+  --color-foreground: var(--text);
+  --color-muted-foreground: var(--muted);
+  --color-positive: var(--positive);
+  --color-negative: var(--negative);
+  --color-warning: var(--warning);
+  --color-on-accent: var(--on-accent);
+  --color-hover: var(--hover);
+  --color-pressed: var(--pressed);
+  --color-selected: var(--selected);
+  --color-series-1: var(--series-1);
+  --color-series-2: var(--series-2);
+  --color-series-3: var(--series-3);
+  --color-series-4: var(--series-4);
+  --color-series-5: var(--series-5);
+
+  /* shadcn aliases */
+  --color-primary: var(--accent);
+  --color-primary-foreground: var(--on-accent);
+  --color-ring: var(--accent);
+  --color-accent: var(--hover);
+  --color-accent-foreground: var(--text);
+  --color-card: var(--surface);
+  --color-card-foreground: var(--text);
+  --color-popover: var(--surface-raised);
+  --color-popover-foreground: var(--text);
+  --color-secondary: var(--surface-raised);
+  --color-secondary-foreground: var(--text);
+  --color-muted: var(--surface-raised);
+  --color-destructive: var(--negative);
+  --color-destructive-foreground: var(--on-accent);
+  --color-input: var(--border);
+  --color-chart-1: var(--series-1);
+  --color-chart-2: var(--series-2);
+  --color-chart-3: var(--series-3);
+  --color-chart-4: var(--series-4);
+  --color-chart-5: var(--series-5);
+  --color-sidebar: var(--background);
+  --color-sidebar-foreground: var(--text);
+  --color-sidebar-primary: var(--accent);
+  --color-sidebar-primary-foreground: var(--on-accent);
+  --color-sidebar-accent: var(--hover);
+  --color-sidebar-accent-foreground: var(--text);
+  --color-sidebar-border: var(--border);
+  --color-sidebar-ring: var(--accent);
+}

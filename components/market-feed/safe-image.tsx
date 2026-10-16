@@ -28,9 +28,9 @@ export function SafeImage({ src, alt, className, fallbackSrc, ...props }: SafeIm
             );
         }
         return (
-            <div className={cn("flex items-center justify-center bg-slate-800 text-slate-500", className)}>
+            <div className={cn("flex items-center justify-center bg-muted text-muted-foreground", className)}>
                 <span className="sr-only">{alt}</span>
-                <ImageOff className="h-4 w-4" />
+                <ImageOff className="size-4" />
             </div>
         );
     }

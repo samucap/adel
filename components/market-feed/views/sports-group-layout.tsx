@@ -22,8 +22,8 @@ export function SportsGroupLayout({ event }: SportsGroupLayoutProps) {
         .slice(0, 5);
 
     return (
-        <div className="flex flex-col gap-2 pt-2">
-            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+        <div className="flex flex-col gap-2">
+            <div className="scrollbar-hide flex gap-2 overflow-x-auto pb-1">
                 {topOutcomes.map((outcome, index) => {
                     const percent = Math.round(outcome.price * 100);
                     const isFavorite = index === 0;
@@ -34,17 +34,14 @@ export function SportsGroupLayout({ event }: SportsGroupLayoutProps) {
                         <div
                             key={outcome.id ?? index}
                             className={cn(
-                                "shrink-0 flex flex-col items-center gap-1 p-2 rounded-md border transition-all",
-                                "min-w-[85px] max-w-[95px]",
-                                isFavorite
-                                    ? "border-green-500/50 bg-green-900/10 shadow-[0_0_10px_rgba(34,197,94,0.1)]"
-                                    : "border-white/10 bg-white/5 hover:border-white/20"
+                                "flex w-22 shrink-0 flex-col items-center gap-1 rounded-md border p-2 transition-colors",
+                                isFavorite ? "border-primary/40 bg-selected" : "border-border bg-surface-raised hover:bg-hover"
                             )}
                         >
                             {/* Team Logo */}
                             <div className={cn(
-                                "rounded-full overflow-hidden border-2 flex items-center justify-center",
-                                isFavorite ? "h-9 w-9 border-green-500/40" : "h-7 w-7 border-white/20"
+                                "flex items-center justify-center overflow-hidden rounded-full border-2",
+                                isFavorite ? "size-9 border-primary/40" : "size-7 border-border"
                             )}
                                 style={teamColor && !isFavorite ? { borderColor: teamColor } : undefined}
                             >
@@ -52,12 +49,12 @@ export function SportsGroupLayout({ event }: SportsGroupLayoutProps) {
                                     <SafeImage
                                         src={imgSrc}
                                         alt={outcome.label}
-                                        className="h-full w-full object-cover"
+                                        className="size-full object-cover"
                                     />
                                 ) : (
                                     <div className={cn(
-                                        "h-full w-full flex items-center justify-center text-[10px] font-bold uppercase",
-                                        isFavorite ? "bg-green-500/20 text-green-400" : "bg-white/10 text-muted-foreground"
+                                        "flex size-full items-center justify-center text-2xs font-bold uppercase",
+                                        isFavorite ? "bg-primary/12 text-primary" : "bg-muted text-muted-foreground"
                                     )}>
                                         {outcome.label.charAt(0)}
                                     </div>
@@ -66,22 +63,22 @@ export function SportsGroupLayout({ event }: SportsGroupLayoutProps) {
 
                             {/* Probability */}
                             <div className={cn(
-                                "text-center",
-                                isFavorite ? "text-sm font-bold text-green-400" : "text-xs font-semibold text-red-400"
+                                "text-center font-mono",
+                                isFavorite ? "text-sm font-bold text-primary" : "text-xs font-semibold text-foreground"
                             )}>
                                 {percent}%
                             </div>
 
                             {/* Team Name */}
                             <div className={cn(
-                                "text-center text-[9px] leading-tight line-clamp-2 font-medium",
-                                isFavorite ? "text-foreground" : "text-muted-foreground"
+                                "line-clamp-2 text-center text-2xs leading-tight font-medium",
+                                isFavorite ? "text-primary" : "text-muted-foreground"
                             )}>
                                 {outcome.label}
                             </div>
 
                             {isFavorite && (
-                                <div className="px-1.5 py-0.5 bg-green-500/20 text-green-400 text-[8px] font-bold uppercase tracking-wider rounded border border-green-500/30">
+                                <div className="rounded-sm bg-primary/12 px-1 py-0.5 text-2xs font-bold tracking-wider text-primary uppercase">
                                     Favorite
                                 </div>
                             )}
@@ -91,7 +88,7 @@ export function SportsGroupLayout({ event }: SportsGroupLayoutProps) {
             </div>
 
             {outcomes.length > 5 && (
-                <div className="flex justify-between items-center text-[9px] text-muted-foreground">
+                <div className="flex items-center justify-between text-2xs text-muted-foreground">
                     <span>{outcomes.length} total teams</span>
                     <span>Top 5 shown</span>
                 </div>

@@ -81,8 +81,6 @@ export default function SignupPage() {
                     <CardHeader className="space-y-3 pb-4 pt-8 text-center">
                         <div>
                             <AnimatedGradientText
-                                colorFrom="#DCF763"
-                                colorTo="#4AE0A5"
                                 speed={1}
                                 className="text-3xl font-bold tracking-tight"
                             >
