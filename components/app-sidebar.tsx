@@ -33,12 +33,7 @@ import {
   Settings05Icon,
   ArrowRight01Icon,
 } from "@hugeicons/core-free-icons";
-import {
-  Activity,
-  LayoutDashboard,
-  Dices,
-  ChartNetwork,
-} from "lucide-react";
+import { Activity, LayoutDashboard, Dices, ChartNetwork } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -62,7 +57,7 @@ function RailButton({
   const buttonClasses = cn(
     "flex items-center justify-center size-9 rounded-md transition-colors",
     "text-muted-foreground hover:text-foreground hover:bg-accent",
-    isActive && "text-foreground bg-accent"
+    isActive && "text-foreground bg-accent",
   );
 
   const content = href ? (
@@ -103,7 +98,9 @@ function SidebarPanel({
   onLogout: () => void;
 }) {
   const { user } = useAuthStore();
-  const [expandedItems, setExpandedItems] = React.useState<Record<string, boolean>>({
+  const [expandedItems, setExpandedItems] = React.useState<
+    Record<string, boolean>
+  >({
     Platform: true,
   });
 
@@ -114,7 +111,7 @@ function SidebarPanel({
   React.useEffect(() => {
     if (activeSection) {
       const navItem = navData.navMain.find(
-        (item) => item.title.toLowerCase() === activeSection
+        (item) => item.title.toLowerCase() === activeSection,
       );
       if (navItem) {
         setExpandedItems((prev) => ({ ...prev, [navItem.title]: true }));
@@ -128,7 +125,9 @@ function SidebarPanel({
         "h-full border-r border-border bg-sidebar",
         "flex flex-col shrink-0 overflow-hidden",
         "transition-[width,opacity] duration-200 ease-out",
-        open ? "w-64 opacity-100" : "w-0 opacity-0 border-r-0 pointer-events-none"
+        open
+          ? "w-64 opacity-100"
+          : "w-0 opacity-0 border-r-0 pointer-events-none",
       )}
     >
       <div className="flex flex-col h-full min-w-[16rem]">
@@ -153,7 +152,7 @@ function SidebarPanel({
                 className={cn(
                   "flex items-center w-full gap-2 px-3 py-1.5 text-xs",
                   "text-muted-foreground/70 uppercase tracking-wider font-medium",
-                  "transition-colors hover:text-foreground"
+                  "transition-colors hover:text-foreground",
                 )}
               >
                 <span className="flex-1 text-left">{group.title}</span>
@@ -162,7 +161,7 @@ function SidebarPanel({
                   strokeWidth={2}
                   className={cn(
                     "size-3.5 transition-transform duration-150",
-                    expandedItems[group.title] && "rotate-90"
+                    expandedItems[group.title] && "rotate-90",
                   )}
                 />
               </button>
@@ -175,7 +174,8 @@ function SidebarPanel({
                       className={cn(
                         "flex items-center gap-2 px-4 py-1.5 text-sm",
                         "text-muted-foreground hover:text-foreground hover:bg-accent transition-colors",
-                        item.isActive(pathname) && "text-foreground bg-accent font-medium"
+                        item.isActive(pathname) &&
+                          "text-foreground bg-accent font-medium",
                       )}
                     >
                       <item.icon className="size-4 shrink-0" />
@@ -194,10 +194,7 @@ function SidebarPanel({
             <DropdownMenuTrigger asChild>
               <button className="flex items-center gap-2 w-full px-2 py-1.5 rounded-md hover:bg-accent transition-colors">
                 <Avatar className="size-7">
-                  <AvatarImage
-                    src=""
-                    alt={navData.user.name}
-                  />
+                  <AvatarImage src="" alt={navData.user.name} />
                   <AvatarFallback className="text-xs">CN</AvatarFallback>
                 </Avatar>
                 <div className="flex-1 text-left min-w-0">
@@ -232,7 +229,9 @@ function SidebarPanel({
               </DropdownMenuGroup>
               <DropdownMenuSeparator />
               <DropdownMenuGroup>
-                <DropdownMenuItem><Link href="/profile">Account</Link></DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Link href="/profile">Account</Link>
+                </DropdownMenuItem>
                 <DropdownMenuItem>Billing</DropdownMenuItem>
                 <DropdownMenuItem>Settings</DropdownMenuItem>
               </DropdownMenuGroup>
@@ -284,7 +283,11 @@ const defaultNavData = {
     },
   ],
   bottomIcons: [
-    { label: "Notifications", icon: Notification03Icon, section: "notifications" },
+    {
+      label: "Notifications",
+      icon: Notification03Icon,
+      section: "notifications",
+    },
     { label: "Settings", icon: Settings05Icon, section: "settings" },
   ],
 };
@@ -298,7 +301,9 @@ export function AppSidebar() {
   const [panelOpen, setPanelOpen] = React.useState(false);
   const [activeSection, setActiveSection] = React.useState<string | null>(null);
   const [dropdownOpen, setDropdownOpen] = React.useState(false);
-  const closeTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const closeTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
 
   const navData = {
     ...defaultNavData,
@@ -368,7 +373,10 @@ export function AppSidebar() {
         <div className="flex h-full w-12 flex-col items-center border-r border-border bg-sidebar shrink-0">
           {/* Logo */}
           <div className="flex items-center justify-center h-12 w-full">
-            <Link href="/" className="flex items-center justify-center size-9 rounded-md bg-primary/10 hover:bg-primary/20 transition-colors">
+            <Link
+              href="/"
+              className="flex items-center justify-center size-9 rounded-md bg-primary/10 hover:bg-primary/20 transition-colors"
+            >
               <Activity className="size-5 text-primary" />
             </Link>
           </div>
@@ -388,7 +396,7 @@ export function AppSidebar() {
                   href={item.url}
                   showTooltip={!panelOpen}
                 />
-              ))
+              )),
             )}
           </div>
 
@@ -401,7 +409,11 @@ export function AppSidebar() {
               <RailButton
                 key={item.label}
                 icon={(props) => (
-                  <HugeiconsIcon icon={item.icon} strokeWidth={1.8} {...props} />
+                  <HugeiconsIcon
+                    icon={item.icon}
+                    strokeWidth={1.8}
+                    {...props}
+                  />
                 )}
                 label={item.label}
                 isActive={panelOpen && activeSection === item.section}
@@ -438,7 +450,9 @@ export function AppSidebar() {
                             src={navData.user.avatar}
                             alt={navData.user.name}
                           />
-                          <AvatarFallback className="text-xs">CN</AvatarFallback>
+                          <AvatarFallback className="text-xs">
+                            CN
+                          </AvatarFallback>
                         </Avatar>
                       </ItemMedia>
                       <ItemContent>
@@ -454,12 +468,16 @@ export function AppSidebar() {
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
                 <DropdownMenuGroup>
-                  <DropdownMenuItem><Link href="/profile">Account</Link></DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Link href="/profile">Account</Link>
+                  </DropdownMenuItem>
                   <DropdownMenuItem>Billing</DropdownMenuItem>
                   <DropdownMenuItem>Settings</DropdownMenuItem>
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout}>Log out</DropdownMenuItem>
+                <DropdownMenuItem onClick={handleLogout}>
+                  Log out
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -484,9 +502,7 @@ export function AppSidebarLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen w-full bg-background">
       <AppSidebar />
-      <main className="ml-12 flex-1 overflow-auto">
-        {children}
-      </main>
+      <main className="ml-12 flex-1 overflow-auto">{children}</main>
     </div>
   );
 }
