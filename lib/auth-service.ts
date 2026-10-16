@@ -195,7 +195,7 @@ export const authApi = {
   },
 
   async logout(): Promise<void> {
-    await authFetch<void>(authUrl("/logout-token"), {
+    await authFetch<void>(authUrl("/logout"), {
       method: "POST",
     });
   },
