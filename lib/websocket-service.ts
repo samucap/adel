@@ -1,11 +1,21 @@
 import React from 'react'
 import { useEventStore } from '@/stores/eventStore'
+import { parseBookSide, type BookSide } from '@/lib/orderbook'
 
 export interface OrderbookUpdate {
   marketId: string
   tokenId: string
   asks: Array<{ price: number; size: number }>
   bids: Array<{ price: number; size: number }>
+  timestamp: number
+}
+
+export interface OrderbookDelta {
+  marketId: string
+  tokenId: string
+  price: number
+  size: number
+  side: BookSide
   timestamp: number
 }
 
@@ -38,11 +48,13 @@ class PolymarketWebSocketService {
   private connectionTimeout: NodeJS.Timeout | null = null
   private isConnecting = false
 
-  // Track subscribed asset IDs (token IDs)
+  // Track subscribed asset IDs (token IDs) and how many callers want each one
   private subscribedAssetIds = new Set<string>()
+  private assetRefCounts = new Map<string, number>()
 
   // Callbacks for different update types
   private orderbookCallbacks = new Set<WebSocketCallback<OrderbookUpdate>>()
+  private orderbookDeltaCallbacks = new Set<WebSocketCallback<OrderbookDelta>>()
   private priceCallbacks = new Set<WebSocketCallback<PriceUpdate>>()
   private tradeCallbacks = new Set<WebSocketCallback<TradeUpdate>>()
 
@@ -235,6 +247,7 @@ class PolymarketWebSocketService {
 
 
     this.subscribedAssetIds.clear()
+    this.assetRefCounts.clear()
   }
 
   private attemptReconnect(): void {
@@ -289,14 +302,8 @@ class PolymarketWebSocketService {
     const orderbookUpdate: OrderbookUpdate = {
       marketId: market,
       tokenId: asset_id,
-      asks: asks.map((ask: any) => ({
-        price: parseFloat(ask.price),
-        size: parseFloat(ask.size)
-      })),
-      bids: bids.map((bid: any) => ({
-        price: parseFloat(bid.price),
-        size: parseFloat(bid.size)
-      })),
+      asks: toLevels(asks),
+      bids: toLevels(bids),
       timestamp: parseInt(timestamp)
     }
 
@@ -305,13 +312,29 @@ class PolymarketWebSocketService {
 
   private handlePriceChange(message: any): void {
     const { market, price_changes, timestamp } = message
+    if (!Array.isArray(price_changes)) return
 
-    // Handle multiple price changes
+    // price_change is a level delta (size 0 removes the price), not a full book.
     price_changes.forEach((change: any) => {
+      const side = typeof change?.side === "string" ? parseBookSide(change.side) : null
+      const price = parseFloat(change?.price)
+      const size = parseFloat(change?.size)
+      if (side && Number.isFinite(price) && Number.isFinite(size)) {
+        const delta: OrderbookDelta = {
+          marketId: market,
+          tokenId: change.asset_id,
+          price,
+          size,
+          side,
+          timestamp: parseInt(timestamp)
+        }
+        this.orderbookDeltaCallbacks.forEach(callback => callback(delta))
+      }
+
       const priceUpdate: PriceUpdate = {
         marketId: market,
         tokenId: change.asset_id,
-        price: parseFloat(change.price),
+        price,
         change24h: 0, // Not provided in price_change events
         volume24h: 0,  // Not provided in price_change events
         timestamp: parseInt(timestamp)
@@ -366,7 +389,10 @@ class PolymarketWebSocketService {
   }
 
   subscribeToMarket(marketId: string, tokenId: string): void {
+    const next = (this.assetRefCounts.get(tokenId) ?? 0) + 1
+    this.assetRefCounts.set(tokenId, next)
     this.subscribedAssetIds.add(tokenId)
+    if (next > 1) return
 
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
       //console.log(`📋 Queued subscription for asset ${tokenId}`)
@@ -384,6 +410,12 @@ class PolymarketWebSocketService {
   }
 
   unsubscribeFromMarket(marketId: string, tokenId: string): void {
+    const next = (this.assetRefCounts.get(tokenId) ?? 1) - 1
+    if (next > 0) {
+      this.assetRefCounts.set(tokenId, next)
+      return
+    }
+    this.assetRefCounts.delete(tokenId)
     this.subscribedAssetIds.delete(tokenId)
 
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
@@ -413,6 +445,11 @@ class PolymarketWebSocketService {
     return () => this.orderbookCallbacks.delete(callback)
   }
 
+  onOrderbookDelta(callback: WebSocketCallback<OrderbookDelta>): () => void {
+    this.orderbookDeltaCallbacks.add(callback)
+    return () => this.orderbookDeltaCallbacks.delete(callback)
+  }
+
   onPriceUpdate(callback: WebSocketCallback<PriceUpdate>): () => void {
     this.priceCallbacks.add(callback)
     return () => this.priceCallbacks.delete(callback)
@@ -432,6 +469,16 @@ class PolymarketWebSocketService {
   getSubscribedCount(): number {
     return this.subscribedAssetIds.size
   }
+}
+
+function toLevels(levels: any): Array<{ price: number; size: number }> {
+  if (!Array.isArray(levels)) return []
+  return levels.flatMap((level) => {
+    const price = parseFloat(level?.price)
+    const size = parseFloat(level?.size)
+    if (!Number.isFinite(price) || !Number.isFinite(size)) return []
+    return [{ price, size }]
+  })
 }
 
 // Export singleton instance

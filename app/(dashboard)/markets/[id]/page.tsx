@@ -2,14 +2,13 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo } from "react";
-import { motion } from "framer-motion";
 import { useEventStore } from "@/stores/eventStore";
 import { useMarketStore } from "@/stores/marketStore";
 import {
   useMarketTokenIds,
   useMultiPriceHistory,
 } from "@/lib/polymarket-hooks";
-import { CHART_COLORS_HEX } from "@/lib/chart-utils";
+import { seriesVar } from "@/lib/tokens";
 import { EnhancedTradingViewChart } from "@/components/charting/EnhancedTradingViewChart";
 import { MarketSidebar } from "@/components/market/MarketSidebar";
 import { EventMarketsPanel } from "@/components/market/EventMarketsPanel";
@@ -17,6 +16,8 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, AlertCircle, RefreshCw } from "lucide-react";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
+import { formatEndLabel } from "@/lib/duration";
 
 export default function MarketDetailPage() {
   const params = useParams();
@@ -72,14 +73,9 @@ export default function MarketDetailPage() {
     }
   }, [setOutcomeTokenId]);
 
-  // Get price history for visible outcomes
-  const visibleTokenMappings =
-    tokenMappings?.filter((tm) => visibleOutcomes.has(tm.marketId)) || [];
-  const tokenIds = tokenMappings?.map(tm => tm.clobTokenId);
-  const multiPriceQuery = useMultiPriceHistory(
-    tokenIds.slice(0, 10),
-    chartInterval,
-  );
+  // History for every outcome the toggles can show. Visibility only hides a line.
+  const tokenIds = tokenMappings.map((tm) => tm.clobTokenId).filter(Boolean);
+  const multiPriceQuery = useMultiPriceHistory(tokenIds, chartInterval);
 
   // ALL outcomes with metadata (for chart toggle pills)
   const outcomeOptions = useMemo(
@@ -87,14 +83,13 @@ export default function MarketDetailPage() {
       outcomes.map((outcome, index) => ({
         id: outcome.id || `outcome-${index}`,
         label: outcome.label,
-        color: CHART_COLORS_HEX[index % CHART_COLORS_HEX.length],
+        color: seriesVar(index),
       })),
     [outcomes],
   );
 
-  // Build outcomeSeries (visible outcomes with price data)
   const outcomeSeries = useMemo(() => {
-    return visibleTokenMappings.map((mapping, idx) => {
+    return tokenMappings.map((mapping, idx) => {
       const clobTokenId = mapping?.clobTokenId;
       const data = (clobTokenId && multiPriceQuery.data?.history?.[clobTokenId])
         ? multiPriceQuery.data.history[clobTokenId]
@@ -103,12 +98,12 @@ export default function MarketDetailPage() {
       return {
         id: mapping?.marketId ?? "",
         label: option?.label ?? "",
-        color: option?.color ?? CHART_COLORS_HEX[idx % CHART_COLORS_HEX.length],
+        color: option?.color ?? seriesVar(idx),
         data,
         clobTokenId: clobTokenId ?? "",
       };
     });
-  }, [multiPriceQuery.data, visibleTokenMappings, outcomeOptions]);
+  }, [multiPriceQuery.data, tokenMappings, outcomeOptions]);
 
   const handleRetry = () => {
     window.location.reload();
@@ -119,213 +114,86 @@ export default function MarketDetailPage() {
     // If market events are loaded but this ID isn't among them, show not-found
     if (marketEvents.length > 0 && !marketEvents.find((e) => e.id === id)) {
       return (
-        <div className="h-[calc(100vh-4rem)] bg-black flex items-center justify-center p-6">
-          <motion.div
-            className="text-center space-y-6"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            <div className="flex items-center justify-center w-16 h-16 mx-auto bg-[#FF4D00]/20 rounded-full">
-              <AlertCircle className="w-8 h-8 text-[#FF4D00]" />
-            </div>
-            <div>
-              <h2 className="text-xl font-mono text-[#FF4D00] mb-2">
-                Market Not Found
-              </h2>
-              <p className="text-muted-foreground">
-                This market doesn&apos;t exist or is no longer available.
-              </p>
-            </div>
-            <div className="flex gap-3 justify-center">
-              <Button
-                onClick={() => handleRetry()}
-                className="bg-[#39FF14] hover:bg-[#39FF14]/80 text-black font-mono"
-              >
-                <RefreshCw className="w-4 h-4 mr-2" />
-                Retry
-              </Button>
+        <div className="flex h-full flex-col items-center justify-center gap-4 p-4 text-center">
+          <div className="flex size-14 items-center justify-center rounded-full bg-negative/12">
+            <AlertCircle className="size-7 text-negative" />
+          </div>
+          <div>
+            <h2 className="mb-1 text-lg font-semibold text-foreground">Market Not Found</h2>
+            <p className="text-sm text-muted-foreground">
+              This market doesn&apos;t exist or is no longer available.
+            </p>
+          </div>
+          <div className="flex justify-center gap-2">
+            <Button onClick={handleRetry}>
+              <RefreshCw className="size-4" />
+              Retry
+            </Button>
+            <Button variant="outline" asChild>
               <Link href="/markets">
-                <Button
-                  variant="outline"
-                  className="border-[#00F0FF] text-[#00F0FF] hover:bg-[#00F0FF]/10"
-                >
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Back to Markets
-                </Button>
+                <ArrowLeft className="size-4" />
+                Back to Markets
               </Link>
-            </div>
-          </motion.div>
+            </Button>
+          </div>
         </div>
       );
     }
 
     // Still loading / waiting for store to hydrate
     return (
-      <motion.div
-        className="h-[calc(100vh-4rem)] bg-black p-6"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.3 }}
-      >
-        <div className="max-w-7xl mx-auto space-y-6">
-          <motion.div
-            className="flex items-center gap-4"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-          >
-            <Skeleton className="w-10 h-10 rounded-lg animate-pulse" />
-            <div className="space-y-2">
-              <Skeleton className="w-64 h-6 animate-pulse" />
-              <Skeleton className="w-32 h-4 animate-pulse" />
-            </div>
-          </motion.div>
-          <motion.div
-            className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-[calc(100vh-12rem)]"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            <div className="lg:col-span-3">
-              <Skeleton className="w-full h-full rounded-lg animate-pulse" />
-            </div>
-            <div>
-              <Skeleton className="w-full h-full rounded-lg animate-pulse" />
-            </div>
-          </motion.div>
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center gap-3">
+          <Skeleton className="size-9 rounded-md" />
+          <div className="flex flex-col gap-2">
+            <Skeleton className="h-6 w-64" />
+            <Skeleton className="h-4 w-32" />
+          </div>
         </div>
-      </motion.div>
+        <div className="grid gap-3 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+          <Skeleton className="h-125 rounded-lg" />
+          <Skeleton className="h-125 rounded-lg" />
+        </div>
+      </div>
     );
   }
 
   return (
-    <div className="h-[calc(100vh-4rem)] bg-black overflow-hidden">
-      {/* Header */}
-      <motion.header
-        className="border-b border-[#39FF14]/20 px-6 py-4 bg-black/50 backdrop-blur-sm"
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-      >
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <motion.div
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.1 }}
-            >
-              <Link href="/markets">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-[#00F0FF] hover:text-[#39FF14] hover:bg-[#39FF14]/10"
-                >
-                  <ArrowLeft className="w-5 h-5" />
-                </Button>
-              </Link>
-            </motion.div>
-            <div>
-              <motion.h1
-                className="text-xl font-bold tracking-tight text-white line-clamp-2"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.2 }}
-              >
-                {currEv.title}
-              </motion.h1>
-              <motion.div
-                className="flex items-center gap-4 text-sm text-muted-foreground mt-1"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.3 }}
-              >
-                <span className="flex items-center gap-1">
-                  <div
-                    className={`w-2 h-2 rounded-full ${currEv.isLive ? "bg-[#39FF14] animate-pulse" : "bg-gray-500"}`}
-                  />
-                  {currEv.isLive ? "Live" : "Upcoming"}
-                </span>
-                <span>Vol: {currEv.stats.volumeUSD}</span>
-                <span className="text-[#00F0FF] font-mono">
-                  End: {new Date(currEv.endDate).toLocaleDateString()}
-                </span>
-              </motion.div>
-            </div>
+    <div className="flex flex-col gap-3">
+      <header className="flex items-start gap-3 border-b border-border pb-3">
+        <Button variant="ghost" size="icon" asChild className="shrink-0 text-muted-foreground hover:text-foreground">
+          <Link href="/markets" aria-label="Back to markets">
+            <ArrowLeft className="size-5" />
+          </Link>
+        </Button>
+        <div className="min-w-0">
+          <h1 className="line-clamp-2 text-xl font-bold tracking-tight text-foreground">{currEv.title}</h1>
+          <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+            <span className="flex items-center gap-1.5">
+              <span className={cn("size-2 rounded-full", currEv.isLive ? "animate-pulse bg-positive" : "bg-muted-foreground")} />
+              {currEv.isLive ? "Live" : "Upcoming"}
+            </span>
+            <span>Vol: {currEv.stats.volumeUSD}</span>
+            <span className="font-mono">{formatEndLabel(currEv.endDate)}</span>
           </div>
         </div>
-      </motion.header>
+      </header>
 
-      {/* Main Content */}
-      <div className="flex-1 overflow-hidden">
-        <div className="max-w-7xl mx-auto p-6 h-full">
-          <div className="flex flex-1 gap-6 min-h-0">
-            {/* Left Column: Chart + Event Markets (65%) */}
-            <div className="w-[60%] flex flex-col gap-6 min-h-0 max-h-[calc(100vh-12rem)]">
-              {/* Main Chart */}
-              <motion.div
-                className="w-full flex flex-col min-h-0 max-h-[calc(100vh-12rem)]"
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.1, duration: 0.3 }}
-              >
-                {tokenMappings ? (
-                  outcomeSeries.length > 0 ? (
-                    <EnhancedTradingViewChart
-                      outcomeOptions={outcomeOptions}
-                      outcomeSeries={outcomeSeries}
-                      visibleOutcomes={visibleOutcomes}
-                      onToggleOutcome={toggleOutcomeVisibility}
-                      height={500}
-                    />
-                  ) : (
-                    <motion.div
-                      className="w-full h-full bg-black border border-[#39FF14]/20 rounded-lg flex items-center justify-center"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 0.2 }}
-                    >
-                      <div className="text-center text-[#00F0FF] font-mono space-y-3">
-                        <div className="w-8 h-8 border-2 border-[#00F0FF]/30 border-t-[#00F0FF] rounded-full animate-spin mx-auto"></div>
-                        <div className="text-sm">Loading chart data...</div>
-                      </div>
-                    </motion.div>
-                  )
-                ) : (
-                  <motion.div
-                    className="w-full h-full bg-black border border-[#39FF14]/20 rounded-lg flex items-center justify-center"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.2 }}
-                  >
-                    <div className="text-center text-[#00F0FF] font-mono space-y-3">
-                      <div className="w-8 h-8 border-2 border-[#39FF14]/30 border-t-[#39FF14] rounded-full animate-spin mx-auto"></div>
-                      <div className="text-sm">Fetching market tokens...</div>
-                    </div>
-                  </motion.div>
-                )}
-              </motion.div>
+      <div className="grid gap-3 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+        <div className="flex min-w-0 flex-col gap-3">
+          <EnhancedTradingViewChart
+            outcomeOptions={outcomeOptions}
+            outcomeSeries={outcomeSeries}
+            visibleOutcomes={visibleOutcomes}
+            onToggleOutcome={toggleOutcomeVisibility}
+            loading={multiPriceQuery.isPending}
+            height={500}
+          />
+          <EventMarketsPanel conditionIds={conditionIds} />
+        </div>
 
-              {/* Event Markets Panel */}
-              <motion.div
-                className="flex-2 min-h-0 overflow-hidden"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.3, duration: 0.3 }}
-              >
-                <EventMarketsPanel conditionIds={conditionIds} />
-              </motion.div>
-            </div>
-
-            {/* Right Column: Sidebar (40%) */}
-            <motion.div
-              className="w-[40%] min-h-0 overflow-hidden max-h-[calc(100vh-12rem)]"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.4, duration: 0.3 }}
-            >
-              <MarketSidebar />
-            </motion.div>
-          </div>
+        <div className="min-w-0 lg:sticky lg:top-0 lg:self-start">
+          <MarketSidebar />
         </div>
       </div>
     </div>

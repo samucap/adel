@@ -15,7 +15,7 @@ export default function NotFoundPage() {
             <Particles
                 className="absolute inset-0 z-0"
                 quantity={80}
-                color="#DCF763"
+                color="var(--series-2)"
                 size={0.6}
                 staticity={30}
                 ease={60}
@@ -30,8 +30,6 @@ export default function NotFoundPage() {
             >
                 {/* Large 404 */}
                 <AnimatedGradientText
-                    colorFrom="#DCF763"
-                    colorTo="#4AE0A5"
                     speed={0.8}
                     className="text-8xl font-extrabold tracking-tighter sm:text-9xl"
                 >

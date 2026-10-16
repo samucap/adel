@@ -83,12 +83,11 @@ export const useEventStore = create<EventStoreState>((set, get) => ({
       ? outcomes.find((o) => o.id === marketId)
       : outcomes[0] || null;
 
-    let visibleIds: Set<string>;
     const TOP_N = 5;
     const sorted = outcomes.sort(
       (a, b) => (b.price || 0) - (a.price || 0),
     );
-    visibleIds = new Set(
+    const visibleIds = new Set(
       sorted
         .slice(0, TOP_N)
         .map((o) => o.id || "")

@@ -27,7 +27,7 @@ export function DashboardPanelWrapper({
     // }
 
     return (
-        <div className={cn("h-full w-full min-h-[100vh]", className)}>
+        <div className={cn("h-full w-full", className)}>
             {defaultComponent}
         </div>
     );

@@ -4,14 +4,12 @@ import { AppSidebar } from "@/components/app-sidebar"
 
 export function NavLayout({ children }: { children: React.ReactNode }) {
     return (
-        <div className="flex min-h-screen w-full bg-background">
+        <div className="flex h-dvh w-full bg-background">
             <AppSidebar />
-            {/* Main content with left margin to account for icon rail (48px = 3rem = w-12) */}
-            <div className="ml-12 flex-1 flex flex-col overflow-hidden">
-                <main className="flex flex-1 flex-col gap-4 p-4 pt-4 overflow-auto">
-                    {children}
-                </main>
-            </div>
+            {/* ml-12 clears the fixed 48px icon rail */}
+            <main className="ml-12 flex min-w-0 flex-1 flex-col overflow-hidden p-4">
+                {children}
+            </main>
         </div>
     )
 }

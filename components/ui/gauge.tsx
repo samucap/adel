@@ -10,7 +10,7 @@ interface GaugeProps {
     color?: string;
 }
 
-export function Gauge({ value, label, subLabel, size = 60, color = "#27F293" }: GaugeProps) {
+export function Gauge({ value, label, subLabel, size = 60, color = "var(--positive)" }: GaugeProps) {
     const radius = size / 2 - 4; // stroke width 4
     const circumference = 2 * Math.PI * radius;
     const offset = circumference - (value / 100) * circumference;
@@ -23,7 +23,7 @@ export function Gauge({ value, label, subLabel, size = 60, color = "#27F293" }: 
                     cx={size / 2}
                     cy={size / 2}
                     r={radius}
-                    stroke="#2C2D31"
+                    stroke="var(--border)"
                     strokeWidth="4"
                     fill="none"
                 />
@@ -42,7 +42,7 @@ export function Gauge({ value, label, subLabel, size = 60, color = "#27F293" }: 
                 />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-white font-bold leading-none" style={{ fontSize: size * 0.28 }}>
+                <span className="text-foreground font-bold leading-none" style={{ fontSize: size * 0.28 }}>
                     {Math.round(value)}%
                 </span>
                 {label && (

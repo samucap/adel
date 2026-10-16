@@ -187,6 +187,14 @@ export const authApi = {
     return parseTokenResponse(data);
   },
 
+  async demoLogin(): Promise<AuthTokenResponse> {
+    const data = await authFetch<unknown>(authUrl("/demo"), {
+      method: "POST",
+      body: JSON.stringify({}),
+    });
+    return parseTokenResponse(data);
+  },
+
   async refreshToken(): Promise<AuthTokenResponse> {
     const data = await authFetch<unknown>(authUrl("/refresh-token"), {
       method: "POST",
@@ -195,7 +203,7 @@ export const authApi = {
   },
 
   async logout(): Promise<void> {
-    await authFetch<void>(authUrl("/logout-token"), {
+    await authFetch<void>(authUrl("/logout"), {
       method: "POST",
     });
   },

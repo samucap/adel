@@ -8,31 +8,21 @@ export default function MarketsPage() {
     const { events, eventsLoading, eventsError } = useMarketStore();
 
     return (
-        <div className="min-h-screen">
-            {/* Sticky Category/Filter Nav */}
-            <div className="sticky top-0 z-30 bg-background/80 backdrop-blur-md border-b">
-                <div className="p-4 py-2">
-                    <CategoryNav />
-                </div>
+        <div className="flex flex-col gap-3">
+            <div className="sticky top-0 z-30 border-b border-border bg-background pb-2">
+                <CategoryNav />
             </div>
 
-            {/* Content Area with Staggered Animation */}
-            <div className="p-4 md:p-6 space-y-6">
-                {eventsLoading ? (
-                    <div className="py-20 text-center text-muted-foreground">
-                        <div className="animate-pulse">Loading markets...</div>
-                    </div>
-                ) : eventsError ? (
-                    <div className="py-20 text-center">
-                        <div className="text-red-400 mb-2">Failed to load markets</div>
-                        <div className="text-sm text-muted-foreground">{eventsError}</div>
-                    </div>
-                ) : (
-                    <div className="animate-in fade-in slide-in-from-bottom-8 duration-700 ease-out fill-mode-both">
-                        <MarketFeed events={events} />
-                    </div>
-                )}
-            </div>
+            {eventsLoading ? (
+                <div className="animate-pulse py-12 text-center text-sm text-muted-foreground">Loading markets...</div>
+            ) : eventsError ? (
+                <div className="py-12 text-center">
+                    <div className="mb-2 text-negative">Failed to load markets</div>
+                    <div className="text-sm text-muted-foreground">{eventsError}</div>
+                </div>
+            ) : (
+                <MarketFeed events={events} />
+            )}
         </div>
     )
 }

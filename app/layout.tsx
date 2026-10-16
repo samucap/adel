@@ -1,17 +1,21 @@
-import React from "react"
+import React from "react";
 import type { Metadata } from "next";
-import { JetBrains_Mono } from "next/font/google";
+import { JetBrains_Mono, Ubuntu } from "next/font/google";
 import "./globals.css";
-import { Ubuntu as V0_Font_Ubuntu } from 'next/font/google'
-import { AuthProvider } from "@/components/auth/AuthProvider"
-import { Providers } from "@/components/providers"
-import { NavigationProgress } from "@/components/ui/navigation-progress"
-import { Toaster } from "sonner"
+import { AuthProvider } from "@/components/auth/AuthProvider";
+import { Providers } from "@/components/providers";
+import { NavigationProgress } from "@/components/ui/navigation-progress";
+import { Toaster } from "sonner";
 
-// Initialize fonts
-const _ubuntu = V0_Font_Ubuntu({ subsets: ['latin'], weight: ["300", "400", "500", "700"] })
-
-const fontSans = JetBrains_Mono({ subsets: ['latin'], variable: '--font-sans' });
+const fontSans = Ubuntu({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "700"],
+  variable: "--font-ubuntu",
+});
+const fontMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-jetbrains-mono",
+});
 
 export const metadata: Metadata = {
   title: "Notable Dough",
@@ -24,10 +28,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${fontSans.variable} dark`} suppressHydrationWarning>
-      <body
-        className="antialiased"
-      >
+    <html
+      lang="en"
+      className={`${fontSans.variable} ${fontMono.variable} dark`}
+      suppressHydrationWarning
+    >
+      <body className="antialiased">
         <Providers>
           <AuthProvider>
             <NavigationProgress />
@@ -39,9 +45,9 @@ export default function RootLayout({
           position="top-right"
           toastOptions={{
             style: {
-              background: "#132925",
-              border: "1px solid #243F39",
-              color: "#E8EDEB",
+              background: "var(--surface-raised)",
+              border: "1px solid var(--border)",
+              color: "var(--text)",
             },
           }}
         />

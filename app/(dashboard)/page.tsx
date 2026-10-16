@@ -9,130 +9,60 @@ import { CorrelationNetwork } from "@/components/dashboard/correlation-network"
 import { LiquidityLadder } from "@/components/dashboard/liquidity-ladder"
 import { WhalesPanel } from "@/components/dashboard/whales-panel"
 import { StatsCard } from "@/components/dashboard/stat-card"
-import { mockActivities, mockDashboardStats } from "@/lib/mock-data"
 import { BentoCard, BentoGrid } from "@/components/dashboard/bento-grid"
 import { DashboardPanelWrapper } from "@/components/dashboard/panel-wrapper"
 import { DashboardAlerts } from "@/components/dashboard/dashboard-alerts"
 import { Activity, DollarSign, Users, BarChart3, Coins, Layers } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { formatAsOf, formatPercentChange, formatUsd, useDashboard, type DashboardStats } from "@/lib/dashboard"
 
 export default function DashboardPage() {
-
     return (
-        <div className={cn("flex w-full min-h-[100vh]")}>
+        <>
             <DashboardAlerts />
-
-            {/* Unified Masonry/Bento Grid */}
             <BentoGrid cols={6}>
-                {/* Stats Row - compact metric cards */}
-                <BentoCard size="sm">
-                    <StatsCard
-                        title="TVL"
-                        value={`$${(mockDashboardStats.tvl / 1000000).toFixed(1)}M`}
-                        trend="+5.2%"
-                        icon={DollarSign}
-                        accentColor="#DCF763"
-                    />
-                </BentoCard>
-                <BentoCard size="sm">
-                    <StatsCard
-                        title="Volume (24h)"
-                        value={`$${(mockDashboardStats.volume24h / 1000000).toFixed(1)}M`}
-                        trend="+20.1%"
-                        icon={Activity}
-                        accentColor="#70D6FF"
-                    />
-                </BentoCard>
-                <BentoCard size="sm">
-                    <StatsCard
-                        title="Open Interest"
-                        value={`$${(mockDashboardStats.openInterest / 1000000).toFixed(1)}M`}
-                        trend="+12.4%"
-                        icon={BarChart3}
-                        accentColor="#4AE0A5"
-                    />
-                </BentoCard>
-                <BentoCard size="sm">
-                    <StatsCard
-                        title="Active Traders"
-                        value={mockDashboardStats.activeTraders.toLocaleString()}
-                        trend="+180"
-                        icon={Users}
-                        accentColor="#ED254E"
-                    />
-                </BentoCard>
-                <BentoCard size="sm">
-                    <StatsCard
-                        title="Fees (24h)"
-                        value={`$${(mockDashboardStats.fees24h / 1000).toFixed(0)}k`}
-                        trend="+8.5%"
-                        icon={Coins}
-                        accentColor="#DCF763"
-                    />
-                </BentoCard>
-                <BentoCard size="sm">
-                    <StatsCard
-                        title="Active Markets"
-                        value={mockDashboardStats.activeMarkets.toLocaleString()}
-                        trend="New: 12"
-                        icon={Layers}
-                        accentColor="#A0ACAD"
-                    />
-                </BentoCard>
-                {/* Critical Panels - larger space for complex lists */}
+                <DashboardStatsRow />
                 <BentoCard size="md">
                     <DashboardPanelWrapper
                         panelId="trending"
                         defaultComponent={<TrendingMarketsPanel />}
                     />
                 </BentoCard>
-
                 <BentoCard size="md">
                     <DashboardPanelWrapper
                         panelId="whales"
                         defaultComponent={<WhalesPanel />}
                     />
                 </BentoCard>
-
-                {/* Activity Feed - tall vertical panel for scrolling list */}
                 <BentoCard size="md">
                     <DashboardPanelWrapper
                         panelId="activity"
-                        defaultComponent={<ActivityFeed activities={mockActivities} />}
+                        defaultComponent={<ActivityFeed />}
                     />
                 </BentoCard>
-
-                {/* Treemap - needs more horizontal space for visualization */}
                 <BentoCard size="xl">
                     <DashboardPanelWrapper
                         panelId="treemap"
                         defaultComponent={<MarketTreemap />}
                     />
                 </BentoCard>
-
-                {/* Arbitrage Heatmap - wide visualization */}
                 <BentoCard size="xl">
                     <DashboardPanelWrapper
                         panelId="arbitrage"
                         defaultComponent={<ArbitrageHeatmap />}
                     />
                 </BentoCard>
-
-                {/* Analytics panels - standard size for charts */}
                 <BentoCard size="md">
                     <DashboardPanelWrapper
                         panelId="scatter"
                         defaultComponent={<EdgeRiskScatter />}
                     />
                 </BentoCard>
-
                 <BentoCard size="md">
                     <DashboardPanelWrapper
                         panelId="correlation"
                         defaultComponent={<CorrelationNetwork />}
                     />
                 </BentoCard>
-
                 <BentoCard size="md">
                     <DashboardPanelWrapper
                         panelId="liquidity"
@@ -140,6 +70,81 @@ export default function DashboardPage() {
                     />
                 </BentoCard>
             </BentoGrid>
-        </div>
+        </>
+    )
+}
+
+function DashboardStatsRow() {
+    const query = useDashboard<DashboardStats>("/dashboard/stats")
+
+    if (query.isPending) {
+        return (
+            <>
+                {Array.from({ length: 6 }).map((_, i) => (
+                    <BentoCard size="sm" key={i}>
+                        <div className="h-full animate-pulse rounded-lg bg-muted/40" />
+                    </BentoCard>
+                ))}
+            </>
+        )
+    }
+
+    if (query.isError || !query.data) {
+        return (
+            <BentoCard size="xl">
+                <div className="flex h-full items-center justify-between gap-3 p-4">
+                    <p className="text-sm text-negative">Couldn&apos;t load market stats.</p>
+                    <button type="button" onClick={() => query.refetch()} className="focus-ring text-xs font-semibold uppercase">
+                        Retry
+                    </button>
+                </div>
+            </BentoCard>
+        )
+    }
+
+    const stats = query.data
+    const asOf = formatAsOf(stats.marketsAsOf)
+    const tradesAsOf = formatAsOf(stats.tradesAsOf)
+    const traderDelta = stats.activeTradersChange
+    const traderTrend = traderDelta == null ? null : `${traderDelta > 0 ? "+" : ""}${traderDelta.toLocaleString()}`
+
+    return (
+        <>
+            <BentoCard size="sm">
+                <StatsCard title="TVL" value={formatUsd(stats.tvl)} detail={`as of ${asOf}`} icon={DollarSign} />
+            </BentoCard>
+            <BentoCard size="sm">
+                <StatsCard title="Volume (24h)" value={formatUsd(stats.volume24h)} detail={`as of ${asOf}`} icon={Activity} />
+            </BentoCard>
+            <BentoCard size="sm">
+                <StatsCard
+                    title="Open Interest"
+                    value={formatUsd(stats.openInterest)}
+                    trend={formatPercentChange(stats.openInterestChange)}
+                    detail={`24h · ${asOf}`}
+                    icon={BarChart3}
+                />
+            </BentoCard>
+            <BentoCard size="sm">
+                <StatsCard
+                    title="Active Traders"
+                    value={stats.activeTraders.toLocaleString()}
+                    trend={traderTrend}
+                    detail={`vs prior day · ${tradesAsOf}`}
+                    icon={Users}
+                />
+            </BentoCard>
+            <BentoCard size="sm">
+                <StatsCard title="Fees (24h)" value="—" detail="not stored" icon={Coins} />
+            </BentoCard>
+            <BentoCard size="sm">
+                <StatsCard
+                    title="Active Markets"
+                    value={stats.activeMarkets.toLocaleString()}
+                    detail="with 24h volume"
+                    icon={Layers}
+                />
+            </BentoCard>
+        </>
     )
 }

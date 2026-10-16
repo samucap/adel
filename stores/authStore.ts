@@ -22,6 +22,7 @@ interface AuthState {
 
     login: (email: string, password: string) => Promise<void>
     signup: (email: string, password: string) => Promise<void>
+    enterDemo: () => Promise<void>
     logout: () => Promise<void>
     initSession: () => Promise<void>
     refreshSession: () => Promise<AuthTokenResponse>
@@ -93,6 +94,17 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         set({ error: null })
         try {
             const resp = await authApi.signup(email, password)
+            applyTokenResponse(resp, set, () => get().refreshSession())
+        } catch (err) {
+            set({ error: formatAuthError(err), isLoading: false })
+            throw err
+        }
+    },
+
+    enterDemo: async () => {
+        set({ error: null })
+        try {
+            const resp = await authApi.demoLogin()
             applyTokenResponse(resp, set, () => get().refreshSession())
         } catch (err) {
             set({ error: formatAuthError(err), isLoading: false })

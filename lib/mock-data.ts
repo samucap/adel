@@ -281,7 +281,6 @@ export const mockScatterData = [
 // Type definition for treemap data
 export interface TreemapNode {
     name: string;
-    color: string;
     children?: Array<{
         name: string;
         size: number;
@@ -296,7 +295,6 @@ export interface TreemapNode {
 export const mockTreemapData: TreemapNode[] = [
     {
         name: "Crypto",
-        color: "#10b981",
         children: [
             { name: "Bitcoin", size: 45000, drift: 0.05, liquidityRatio: 0.85, volatilityEdge: 0.12, image: "₿" },
             { name: "Ethereum", size: 28000, drift: 0.08, liquidityRatio: 0.72, volatilityEdge: 0.15, image: "Ξ" },
@@ -305,7 +303,6 @@ export const mockTreemapData: TreemapNode[] = [
     },
     {
         name: "Politics",
-        color: "#ef4444",
         children: [
             { name: "US Election", size: 32000, drift: 0.12, liquidityRatio: 0.91, volatilityEdge: 0.08, image: "🇺🇸" },
             { name: "Midterms", size: 18000, drift: 0.06, liquidityRatio: 0.75, volatilityEdge: 0.11, image: "🏛️" }
@@ -313,7 +310,6 @@ export const mockTreemapData: TreemapNode[] = [
     },
     {
         name: "Sports",
-        color: "#3b82f6",
         children: [
             { name: "Super Bowl", size: 25000, drift: 0.09, liquidityRatio: 0.88, volatilityEdge: 0.07, image: "🏈" },
             { name: "World Cup", size: 22000, drift: 0.04, liquidityRatio: 0.82, volatilityEdge: 0.09, image: "⚽" }
